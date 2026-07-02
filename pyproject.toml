@@ -1,0 +1,10 @@
+[project]
+name = "dynamo-python-node-docs-v1"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+requires-python = ">=3.14"
+dependencies = [
+    "mkdocs-material>=9.5",
+    "pymdown-extensions>=10.7",
+]

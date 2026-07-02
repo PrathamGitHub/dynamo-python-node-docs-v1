@@ -1,0 +1,1 @@
+Provide your entire response as raw Markdown text, but wrap the entire output inside a single code block using triple backticks (```). Do not render the Markdown. If the content itself contains code blocks or triple backticks, escape them or use four backticks (````) for the outer wrapper so the code block does not break.

@@ -1,0 +1,100 @@
+site_name: Civil 3D Automation — Developer Training
+site_description: Onboarding module for Civil 3D automation (Dynamo Python & .NET) developers at Dar.
+docs_dir: docs
+
+theme:
+  name: material
+  icon:
+    logo: fontawesome/solid/book-open
+  features:
+    - navigation.sections
+    - navigation.tabs
+    - navigation.top
+    - navigation.tracking
+    - navigation.expand
+    - navigation.footer
+    - toc.follow
+    - content.code.copy
+    - content.code.annotate
+    - search.highlight
+    - search.suggest
+  palette:
+    - media: "(prefers-color-scheme: light)"
+      scheme: default
+      primary: indigo
+      accent: indigo
+      toggle:
+        icon: material/weather-night
+        name: Switch to dark mode
+    - media: "(prefers-color-scheme: dark)"
+      scheme: slate
+      primary: indigo
+      accent: indigo
+      toggle:
+        icon: material/weather-sunny
+        name: Switch to light mode
+  icon:
+    admonition:
+      note: material/information-outline
+      tip: material/lightbulb-on-outline
+      warning: material/alert-outline
+      danger: material/skull-outline
+      bug: material/bug-outline
+      success: material/check-circle-outline
+
+markdown_extensions:
+  - admonition
+  - attr_list
+  - md_in_html
+  - tables
+  - footnotes
+  - toc:
+      permalink: true
+  - pymdownx.details
+  - pymdownx.highlight:
+      anchor_linenums: true
+  - pymdownx.inlinehilite
+  - pymdownx.snippets
+  - pymdownx.tabbed:
+      alternate_style: true
+  - pymdownx.emoji:
+      emoji_index: !!python/name:material.extensions.emoji.twemoji
+      emoji_generator: !!python/name:material.extensions.emoji.to_svg
+  - pymdownx.superfences:
+      custom_fences:
+        - name: mermaid
+          class: mermaid
+          format: !!python/name:pymdownx.superfences.fence_code_format
+
+extra_javascript:
+  - https://unpkg.com/mermaid@10/dist/mermaid.min.js
+  - assets/mermaid-init.js
+
+extra:
+  generator: false
+  social:
+    - icon: material/web
+      link: https://static.beservices.in/prathamesh/
+    - icon: fontawesome/brands/linkedin
+      link: https://www.linkedin.com/in/prathameshbarane
+    - icon: material/github
+      link: https://github.com/PrathamGitHub/
+
+copyright: Copyright &copy; 2026 Prathamesh Barane
+
+nav:
+  - Home: index.md
+  - Getting Started:
+      - What this script does: getting-started/big-picture.md
+      - Civil 3D API primer: getting-started/civil3d-api-primer.md
+  - Walkthrough:
+      - A. Imports & feature flags: walkthrough/a-imports.md
+      - B. Reading Dynamo inputs safely: walkthrough/b-inputs.md
+      - C. Geometry & object helpers: walkthrough/c-helpers.md
+      - D. Resolving styles & label styles: walkthrough/d-styles.md
+      - E. Crossing detection (the math): walkthrough/e-crossing-detection.md
+      - F. Building profile views: walkthrough/f-profile-views.md
+      - G. The main transaction: walkthrough/g-main-loop.md
+  - Reusable Patterns Cookbook: cookbook.md
+  - Gotchas & Anti-patterns: gotchas.md
+  - Glossary: glossary.md
