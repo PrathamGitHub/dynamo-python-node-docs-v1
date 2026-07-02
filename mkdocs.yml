@@ -1,5 +1,8 @@
 site_name: Civil 3D Automation — Developer Training
 site_description: Onboarding module for Civil 3D automation (Dynamo Python & .NET) developers at Dar.
+site_url: https://prathamgithub.github.io/dynamo-python-node-docs-v1/
+repo_url: https://github.com/PrathamGitHub/dynamo-python-node-docs-v1
+repo_name: dynamo-python-node-docs-v1
 docs_dir: docs
 
 theme:
@@ -78,7 +81,7 @@ extra:
     - icon: fontawesome/brands/linkedin
       link: https://www.linkedin.com/in/prathameshbarane
     - icon: material/github
-      link: https://github.com/PrathamGitHub/
+      link: https://github.com/PrathamGitHub/dynamo-python-node-docs-v1
 
 copyright: Copyright &copy; 2026 Prathamesh Barane
 
