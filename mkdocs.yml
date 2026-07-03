@@ -101,3 +101,9 @@ nav:
   - Reusable Patterns Cookbook: cookbook.md
   - Gotchas & Anti-patterns: gotchas.md
   - Glossary: glossary.md
+  - Dev Environment:
+      - Overview: dev-env/overview.md
+      - Cursor Setup: dev-env/cursor-setup.md
+      - Dynamo Node Workflow: dev-env/dynamo-node-workflow.md
+      - Exercises: dev-env/exercises.md
+      - Exercise Solutions: dev-env/exercise-solutions.md
