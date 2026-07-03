@@ -205,7 +205,7 @@ standardise on CPython 3 for new work.
 ## The meta-lesson
 
 ```mermaid
-flowchart LR
+flowchart TD
     A["Narrow your excepts"] --> B["Log which item + step failed"]
     B --> C["Fail loudly only when fatal"]
     C --> D["Degrade + record everything else"]

@@ -37,6 +37,31 @@ finally:
 OUT = results
 ```
 
+An alternate approach is to use context manager to lock the document and start the transaction.
+```python
+from Autodesk.AutoCAD.ApplicationServices.Core import Application
+from Autodesk.Civil.ApplicationServices import CivilApplication
+
+doc    = Application.DocumentManager.MdiActiveDocument
+db     = doc.Database
+civdoc = CivilApplication.ActiveDocument
+
+results = {"Warnings": []}
+
+with doc.LockDocument() as doc_lock:
+    with db.TransactionManager.StartTransaction() as tr:
+        try:
+            # ---- Your reading/creating/editing goes here ----
+            # Example: item = tr.GetObject(id, OpenMode.ForWrite)
+            
+            tr.Commit() # 🖊️ Make changes permanent
+        except Exception as e:
+            # tr.Abort() is handled automatically by 'with' if an exception occurs
+            results["Warnings"].append(f"Error: {str(e)}")
+
+OUT = results
+```
+
 !!! danger "Two non-negotiables"
     - **Always `Commit()`** on success — an un-committed transaction discards your
       work and can crash AutoCAD.
@@ -186,7 +211,7 @@ def build_unique_name(existing_set, base):
 ## The mental checklist
 
 ```mermaid
-flowchart LR
+flowchart TD
     A["Lock the doc"] --> B["Start transaction"]
     B --> C["Read inputs safely"]
     C --> D["Resolve styles<br/>(fallback + warn)"]

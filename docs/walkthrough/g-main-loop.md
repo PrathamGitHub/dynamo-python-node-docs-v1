@@ -41,14 +41,14 @@ OUT = results
 
 ```mermaid
 flowchart TD
-    S1["1 Find the main network"] --> S1b["1b List all networks<br/>(diagnostic)"]
-    S1b --> S2["2 Compute grid origin"]
-    S2 --> S3["3 Resolve styles & data sources"]
-    S3 --> S4["4 Collect crossing network ids"]
-    S4 --> S5["5 Build connectivity map"]
-    S5 --> S6["6 Find ICs + export CSV"]
-    S6 --> S7["7 Prep model space + grid cursor"]
-    S7 --> S8["8 MAIN LOOP: per IC → per pipe"]
+    S1["Find the main network"] --> S1b["List all networks<br/>(diagnostic)"]
+    S1b --> S2["Compute grid origin"]
+    S2 --> S3["Resolve styles & data sources"]
+    S3 --> S4["Collect crossing network ids"]
+    S4 --> S5["Build connectivity map"]
+    S5 --> S6["Find ICs + export CSV"]
+    S6 --> S7["Prep model space + grid cursor"]
+    S7 --> S8["MAIN LOOP: per IC → per pipe"]
     S8 --> C["Commit"]
 ```
 
