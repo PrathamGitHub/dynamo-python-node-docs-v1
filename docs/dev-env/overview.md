@@ -20,7 +20,7 @@ you all of that — but Cursor doesn't *run* the code; Civil 3D does. So the wor
 is a loop between two tools:
 
 ```mermaid
-flowchart LR
+flowchart TD
     subgraph Cursor["🖊️ Cursor IDE (author + review)"]
         E["Edit .py file"] --> L["Lint + autocomplete<br/>+ AI review"]
     end

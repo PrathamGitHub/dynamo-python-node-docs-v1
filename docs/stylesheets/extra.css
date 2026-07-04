@@ -1,0 +1,13 @@
+/* Center Mermaid diagram containers */
+.mermaid {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    width: 100%;
+    margin: 1rem auto;
+}
+
+/* Ensure the internal SVG centers itself inside the flex container */
+.mermaid svg {
+    margin: 0 auto !important;
+}

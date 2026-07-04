@@ -321,7 +321,7 @@ principles.
 ## What you can build after these
 
 ```mermaid
-flowchart LR
+flowchart TD
     R["Read objects"] --> W["Create objects"]
     W --> U["Update objects"]
     U --> D["Delete / clean up"]

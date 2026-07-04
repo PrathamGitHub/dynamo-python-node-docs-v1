@@ -147,7 +147,7 @@ Player-friendly:
    appears as a runnable card with your named inputs.
 
 ```mermaid
-flowchart LR
+flowchart TD
     DEV["Developer's .dyn<br/>(inputs marked 'Is Input')"] --> PLAYER["Dynamo Player card"]
     PLAYER --> USER["Engineer fills form<br/>→ clicks Play"]
     USER --> RESULT["Automation runs,<br/>no Dynamo knowledge needed"]
