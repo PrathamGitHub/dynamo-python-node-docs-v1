@@ -8,23 +8,30 @@
 
 ---
 
-## The skeleton, one more time
+## The skeleton, one more time (now in `with` form)
 
-Everything below lives inside the sandwich you learned in the
+Everything below lives inside the `with`-form sandwich you learned in the
 [primer](../getting-started/civil3d-api-primer.md) and
-[Cookbook recipe 1](../cookbook.md#recipe-1--the-lock--transaction-skeleton-start-here-every-time):
+[Cookbook recipe 1](../cookbook.md#recipe-1--the-lock--transaction-skeleton-start-here-every-time).
+The `with` blocks dispose the lock and the transaction automatically — and roll back
+an un-committed transaction — even if an exception is thrown:
 
 ```python
-doc_lock = doc.LockDocument()               # 🔒
+import traceback
+results = {"Success": False, "Warnings": [], "Errors": [], "Skipped": [], "Data": None}
+RAISE_ON_ERROR = False                                    # True while developing
+
 try:
-    tr = db.TransactionManager.StartTransaction()
-    try:
-        # ... STEPS 1–8 below ...
-        tr.Commit()                          # 🖊️
-    finally:
-        tr.Dispose()
-finally:
-    doc_lock.Dispose()                       # 🔓
+    with doc.LockDocument():                              # 🔒 auto-released
+        with db.TransactionManager.StartTransaction() as tr:   # 🧹 auto-disposed / rolled back
+            # ... STEPS 1–8 below, appending to results ...
+            tr.Commit()                                    # 🖊️ keep changes
+    results["Success"] = True
+except Exception as ex:                                    # fatal boundary
+    results["Errors"].append(str(ex))
+    results["Traceback"] = traceback.format_exc()
+    if RAISE_ON_ERROR:
+        raise
 
 OUT = results
 ```
@@ -32,8 +39,23 @@ OUT = results
 !!! success "One transaction, one commit"
     All objects — alignments, profiles, views, labels — are created inside **one**
     transaction and committed **once** at the end. Either the whole run succeeds and
-    everything appears together, or it fails and **nothing** is left half-made.
-    ([Autodesk .NET forum: transaction best practices](https://forums.autodesk.com/t5/net-forum/transaction-best-practices/td-p/12537017))
+    everything appears together, or it fails and the `with` block **rolls back** so
+    nothing is left half-made.
+    ([Autodesk — Commit and Rollback Changes (.NET)](https://help.autodesk.com/view/OARX/2025/ENU/?guid=GUID-commit-rollback))
+
+!!! note "Two error boundaries, two jobs"
+    - The **outer `try`** (above) is the *fatal* boundary: a problem that stops the
+      whole run lands in `results["Errors"]`/`["Traceback"]`.
+    - Inside the loop (Step 8), each fallible call gets a **narrow** try/except that
+      records the item in `results["Skipped"]` and continues. Don't confuse the two —
+      see [Gotchas](../gotchas.md#broad-try-except).
+
+!!! tip "`RAISE_ON_ERROR`: dev vs production"
+    `True` while developing → the node fails loudly with the traceback. `False` for
+    Dynamo Player → the engineer gets a readable `results` instead of a red crash.
+
+The results this chapter appends to (`Warnings`, `Skipped`, and payload fields under
+`Data`) follow the standard [`results` schema](../cookbook.md#the-results-schema-read-this-once).
 
 ---
 
@@ -41,14 +63,14 @@ OUT = results
 
 ```mermaid
 flowchart TD
-    S1["Find the main network"] --> S1b["List all networks<br/>(diagnostic)"]
-    S1b --> S2["Compute grid origin"]
-    S2 --> S3["Resolve styles & data sources"]
-    S3 --> S4["Collect crossing network ids"]
-    S4 --> S5["Build connectivity map"]
-    S5 --> S6["Find ICs + export CSV"]
-    S6 --> S7["Prep model space + grid cursor"]
-    S7 --> S8["MAIN LOOP: per IC → per pipe"]
+    S1["1 Find the main network"] --> S1b["1b List all networks<br/>(diagnostic)"]
+    S1b --> S2["2 Compute grid origin"]
+    S2 --> S3["3 Resolve styles & data sources"]
+    S3 --> S4["4 Collect crossing network ids"]
+    S4 --> S5["5 Build connectivity map"]
+    S5 --> S6["6 Find ICs + export CSV"]
+    S6 --> S7["7 Prep model space + grid cursor"]
+    S7 --> S8["8 MAIN LOOP: per IC → per pipe"]
     S8 --> C["Commit"]
 ```
 
@@ -71,7 +93,7 @@ for oid in civdoc.GetPipeNetworkIds():
         target_net = net
         break
 if target_net is None:
-    raise Exception(f'Pipe Network "{network_name}" not found.')
+    raise Exception(f'Pipe Network "{network_name}" not found.')   # fatal → outer try
 ```
 
 !!! tip "Duck-typing check: does it quack?"
@@ -84,11 +106,12 @@ if target_net is None:
 ## Step 1b — List every network (a diagnostic gift)
 
 A small kindness that saves enormous frustration: enumerate **all** network names
-and put them in `results`. When the user's `IN[10]` crossing-network name doesn't
-match, they can read the exact spelling from the Watch node.
+and put them in the result. When the user's crossing-network name doesn't match, they
+can read the exact spelling from the Watch node.
 
 ```python
-results["AvailableNetworks"] = {
+results["Data"] = results.get("Data") or {}
+results["Data"]["AvailableNetworks"] = {
     "Gravity":  sorted(avail_gravity),
     "Pressure": sorted(avail_pressure),
 }
@@ -153,7 +176,7 @@ for sid in target_net.GetStructureIds():
     if getattr(s, "Name", "").startswith(ic_prefix):
         ic_ids.append(sid)
 
-results["IC_Count"] = len(ic_ids)
+results["Data"]["IC_Count"] = len(ic_ids)
 if TEST_LIMIT > 0:                      # optional: process only first N for a quick test
     ic_ids = ic_ids[:TEST_LIMIT]
 ```
@@ -207,7 +230,8 @@ flowchart TD
 !!! warning "Skip, don't crash, on bad data"
     Every step that can fail on messy data (no coordinates, no connected pipe)
     records the item in `results["Skipped"]` and **continues** the loop. One bad
-    manhole must never abort the other 399.
+    manhole must never abort the other 399. Fatal problems (no target network)
+    `raise` and land in the outer `try` → `results["Errors"]`.
 
 ---
 
@@ -215,20 +239,22 @@ flowchart TD
 
 Trace how the script behaves when things go wrong:
 
-| Problem | Response | Where |
+| Problem | Response | Lands in |
 |---|---|---|
-| Main network missing | **raise** (nothing to do) | Step 1 |
-| Style name missing | warn + first available | Step 3 |
-| Surface name given but missing | **raise** (user asked for it) | Step 3 |
-| Crossing network name typo | silently skipped | Step 4 |
-| Manhole has no pipe | record in `Skipped` | Step 8 |
-| Pipe has no coordinates | record in `Skipped` | Step 8 |
-| `AddToProfileView` returns void | ModelSpace fallback scan | Step 8e/f |
+| Main network missing | **raise** (nothing to do) | `Errors` (Step 1) |
+| Style name missing | warn + first available | `Warnings` (Step 3) |
+| Surface name given but missing | **raise** (user asked for it) | `Errors` (Step 3) |
+| Crossing network name typo | silently skipped | — (Step 4) |
+| Manhole has no pipe | record | `Skipped` (Step 8) |
+| Pipe has no coordinates | record | `Skipped` (Step 8) |
+| `AddToProfileView` returns void | ModelSpace fallback scan | `Warnings` (Step 8) |
 
 !!! success "The rule: fail loudly only when you truly can't continue"
-    Raise for *fatal* setup problems (no network, requested surface missing). For
-    everything else, **degrade and report**. The engineer reads `Warnings` and
-    `Skipped`, fixes their data, re-runs. This is what makes a batch tool trustworthy.
+    Raise for *fatal* setup problems (no network, requested surface missing) → they
+    surface in `results["Errors"]`/`["Traceback"]` and stop the run with
+    `Success = False`. For everything else, **degrade and report** via `Warnings` /
+    `Skipped`. The engineer reads the result, fixes their data, re-runs. This is what
+    makes a batch tool trustworthy.
 
 ---
 
@@ -238,8 +264,24 @@ Trace how the script behaves when things go wrong:
     Wrapping the *entire* inner loop body in a single broad `try/except` (as some
     versions do) means a failure just vanishes into a generic warning — you can't
     tell **which** manhole or **which** step broke. Prefer **narrow** try/except
-    around each fallible call, each recording a specific message. See
+    around each fallible call, each recording a specific message to `Skipped`. See
     [Gotchas](../gotchas.md#broad-try-except).
+
+    Note this is *different* from the single **outer** `try` at the top of the node,
+    which exists to capture *fatal* errors into `results["Errors"]`. Outer try =
+    fatal boundary; inner try = per-item, narrow.
+
+---
+
+## Where does this live? (modular reminder)
+
+In the [modular workflow](../dev-env/dynamo-node-workflow.md), the **loader node**
+owns the outer `try`, the `with` lock, the `with` transaction, `Commit`, and
+`RAISE_ON_ERROR`; this Step 1–8 logic lives in your **`run(context)` module** and
+uses the transaction handed in via `context["tr"]`. See
+[Cookbook recipes 7 & 8](../cookbook.md#recipe-7--the-dynamo-loader-node-for-modular-development-in-cursor).
+For a small one-off, the self-contained `with` skeleton at the top of this chapter is
+enough.
 
 ---
 
@@ -247,13 +289,15 @@ Trace how the script behaves when things go wrong:
 
 | Idea | Keep it forever |
 |---|---|
+| `with` lock + `with` transaction | Auto-dispose + auto-rollback, even on error |
 | Setup once (steps 1–7), work in the loop (step 8) | Don't recompute per item |
 | Validate the network by capability | `hasattr` duck-typing |
-| Echo available names to `results` | Self-service debugging |
+| Echo available names to `results["Data"]` | Self-service debugging |
 | Build connectivity map once | O(1) lookups |
 | `TEST_LIMIT` input | Fast iteration |
-| Skip-and-record on bad data | One bad item ≠ failed run |
+| Outer try = fatal → `Errors`; inner try = per-item → `Skipped` | Two boundaries |
 | One transaction, one commit | Atomic all-or-nothing |
+| `RAISE_ON_ERROR` by context | Loud in dev, reported in production |
 
 Next: the distilled [Cookbook](../cookbook.md), the [Gotchas](../gotchas.md), and
 the [Glossary](../glossary.md).

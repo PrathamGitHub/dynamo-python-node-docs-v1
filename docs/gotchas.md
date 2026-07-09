@@ -2,9 +2,9 @@
 
 !!! abstract "How to use this page"
     A field guide to the mistakes that bite Civil 3D automation developers — several
-    of them found in our own example script. Each entry: **what it looks like**, **why
-    it hurts**, and **what to do instead.** When you hit a baffling bug, scan this
-    page first.
+    found in our own example script. Each entry: **what it looks like**, **why it
+    hurts**, and **what to do instead.** When you hit a baffling bug, scan this page
+    first.
 
 ---
 
@@ -18,10 +18,10 @@
         pass
     ```
     A bare `except:` swallows `KeyboardInterrupt`, `SystemExit`, and — worst of all —
-    `NameError`/`AttributeError` from **your own bugs**. The classic symptom:
-    *"nothing happens and there's no error."*
+    `NameError`/`AttributeError` from **your own bugs**. Classic symptom: *"nothing
+    happens and there's no error."*
 
-**Do instead:** catch `Exception` (or narrower), and when debugging, log it.
+**Do instead:** catch `Exception` (or narrower), and record it.
 
 ```python
 try:
@@ -36,8 +36,7 @@ except Exception as e:                       # ✅ narrow; lets fatal signals th
 
 !!! bug "Dead code left over from refactors"
     Our example script has an entire block **after** a `return` in
-    `get_pressure_crossing_label_style_id` — Python never runs it. It looks like a
-    working fallback; it does nothing.
+    `get_pressure_crossing_label_style_id` — Python never runs it.
 
 **Do instead:** run a linter. `ruff` catches this instantly:
 
@@ -67,21 +66,74 @@ for item in items:
     try:
         step_a(item)
     except Exception as e:
-        warnings.append(f"{item.Name}: step_a failed: {e}")
+        skipped.append(f"{item.Name}: step_a failed: {e}")
         continue
 ```
+
+!!! note "One outer try is still correct at the *top* level"
+    The **node/module top-level** does wrap everything in a single try to populate
+    `results["Errors"]`/`["Traceback"]`. That's the *fatal* boundary. Inside a batch
+    loop, keep try/except **narrow and per-item**. Two different jobs.
+
+---
+
+## Not using the `with` form for lock + transaction { #with-form }
+
+!!! bug "Manual try/finally + Dispose() is easy to get wrong"
+    ```python
+    lock = doc.LockDocument()
+    tr = db.TransactionManager.StartTransaction()
+    # ... work ...
+    tr.Commit()
+    tr.Dispose(); lock.Dispose()   # ❌ skipped entirely if an exception is thrown above
+    ```
+    If anything throws before the `Dispose()` lines, you **leak the lock** (drawing
+    stays locked) and **leave a dangling transaction** — which can crash AutoCAD.
+
+**Do instead:** use the **`with` (context-manager) form**. Both the lock and the
+transaction are disposables; `with` guarantees `Dispose()` on exit, including on
+exception, and rolls back an un-committed transaction automatically.
+
+```python
+with doc.LockDocument():                                  # 🔒 auto-released
+    with db.TransactionManager.StartTransaction() as tr:  # 🧹 auto-disposed / rolled back
+        # ... work ...
+        tr.Commit()                                        # 🖊️ keep changes
+```
+([Autodesk — Lock/Unlock a Document (.NET)](https://help.autodesk.com/view/OARX/2025/ENU/?guid=GUID-D4E7A9B2-lock),
+[Autodesk — Commit and Rollback Changes (.NET)](https://help.autodesk.com/view/OARX/2025/ENU/?guid=GUID-commit-rollback))
 
 ---
 
 ## Forgetting `tr.Commit()` { #forgetting-commit }
 
-!!! danger "Your work vanishes — or AutoCAD crashes"
-    An un-committed transaction discards everything, and dangling transactions can
-    crash AutoCAD. There is no "partial save."
+!!! danger "Your work vanishes — silently"
+    With the `with` form, an un-committed transaction is **rolled back** on exit. That
+    protects you from corruption but means: *forget `Commit()` and your changes just
+    disappear, with no error.*
 
-**Do instead:** commit on success, dispose in `finally`. Never leave a transaction
-open across user interaction or another command.
-([Autodesk .NET forum](https://forums.autodesk.com/t5/net-forum/transaction-best-practices/td-p/12537017))
+**Do instead:** call `tr.Commit()` as the **last** line inside the transaction block,
+only after the work succeeded. For read-only scripts a commit is optional but harmless.
+
+---
+
+## Disposing the active document's Database { #with-database }
+
+!!! danger "Never `with adoc.Database as db:` for the active document"
+    ```python
+    with adoc.Database as db:      # ❌ wrong for the ACTIVE document
+        ...
+    ```
+    The active drawing's `Database` is owned by Civil 3D. Wrapping it in a `with`
+    disposes it at block exit — corrupting the live document.
+
+**Do instead:** grab it directly and never dispose it. Only the **lock** and the
+**transaction** are yours to manage with `with`.
+
+```python
+doc = Application.DocumentManager.MdiActiveDocument
+db  = doc.Database             # ✅ use directly; do not dispose
+```
 
 ---
 
@@ -91,23 +143,82 @@ open across user interaction or another command.
     Dynamo runs on a different thread than AutoCAD's command loop. Writing to the
     database without `doc.LockDocument()` throws `eLockViolation` — or corrupts data.
 
-**Do instead:** wrap everything in the lock (Cookbook recipe 1). Read-only queries
+**Do instead:** wrap everything in `with doc.LockDocument():`. Read-only queries
 sometimes work without it, but *"just lock it"* is the safe rule.
+
+---
+
+## Missing `clr.AddReference` (or relying on Dynamo's) { #missing-addreference }
+
+!!! warning "Works today, `ImportError` tomorrow"
+    Assuming an assembly is already loaded because it happened to be is fragile —
+    another graph, a fresh session, or a different machine breaks the import.
+
+**Do instead:** **explicitly** add every assembly you use, at the top of the node:
+
+```python
+clr.AddReference("AcMgd"); clr.AddReference("AcCoreMgd"); clr.AddReference("AcDbMgd")
+clr.AddReference("AecBaseMgd"); clr.AddReference("AecPropDataMgd"); clr.AddReference("AeccDbMgd")
+```
+
+!!! tip "Prefer explicit imports over wildcards"
+    `from Autodesk.Civil.DatabaseServices import Alignment, ProfileView` beats
+    `import *` — it's clear what you depend on and it keeps autocomplete accurate.
+
+---
+
+## `importlib.reload` on a multi-file package { #reload-vs-unload }
+
+!!! bug "'My fix didn't take effect' — you ran stale code"
+    ```python
+    import automations.profile_view_generator as mod
+    importlib.reload(mod)          # ❌ reloads ONLY this module
+    ```
+    `reload` refreshes **one** module. If you edited a **helper** that
+    `profile_view_generator` imports, the helper is still the cached old version — you
+    run stale code and chase a bug you already fixed.
+
+**Do instead:** drop **every** cached module under the package, then re-import:
+
+```python
+def unload_package(package_name):
+    for name in list(sys.modules.keys()):
+        if name == package_name or name.startswith(package_name + "."):
+            del sys.modules[name]
+
+importlib.invalidate_caches()
+unload_package("automations")
+mod = importlib.import_module("automations.profile_view_generator")
+```
+
+!!! tip "Echo the loaded path to confirm"
+    Return `results["ModuleFile"] = getattr(mod, "__file__", None)` so the Watch node
+    shows *which* file actually ran — catches wrong-`REPO`-path mistakes instantly.
+
+---
+
+## `RAISE_ON_ERROR` set wrong for the context { #raise-on-error }
+
+!!! warning "Silent failures in dev, or scary crashes for end users"
+    - `RAISE_ON_ERROR = False` **while developing** hides tracebacks behind a green
+      node — you miss real bugs.
+    - `RAISE_ON_ERROR = True` **in production/Player** turns a recoverable data issue
+      into a red crash for the engineer.
+
+**Do instead:** flip it by context.
+
+```python
+RAISE_ON_ERROR = True    # developing → fail loudly, see the traceback immediately
+RAISE_ON_ERROR = False   # production / Dynamo Player → report via results["Errors"]
+```
 
 ---
 
 ## Forgetting `AddNewlyCreatedDBObject` { #forgetting-addnewly }
 
 !!! danger "Orphaned objects and commit-time corruption"
-    ```python
-    pl = Polyline()
-    ms.AppendEntity(pl)
-    # ❌ missing: tr.AddNewlyCreatedDBObject(pl, True)
-    ```
     Any object you create in code and add to the database must be **registered with
-    the transaction**. Skip it and the object is orphaned.
-
-**Do instead:**
+    the transaction**:
 
 ```python
 pl_id = ms.AppendEntity(pl)
@@ -120,11 +231,11 @@ tr.AddNewlyCreatedDBObject(pl, True)         # ✅ always pair these two lines
 
 !!! danger "The 'it returned None and no error' trap"
     `Alignment.StationOffset`, `PointLocation`, and similar have `out double`
-    parameters. Called the normal Python way, they appear to return nothing — the
+    parameters. Called the normal Python way they appear to return nothing — the
     answers went into boxes you didn't provide.
 
-**Do instead:** pass `clr.Reference[System.Double](0.0)` boxes and read `.Value`
-back (Cookbook recipe 5).
+**Do instead:** pass `clr.Reference[System.Double](0.0)` boxes and read `.Value` back
+(Cookbook recipe 5).
 ([Dynamo forum](https://forum.dynamobim.com/t/how-to-use-civil-3d-api-command-alignment-pointlocation-station-offset-easting-northing-with-python/82232))
 
 ---
@@ -134,8 +245,6 @@ back (Cookbook recipe 5).
 !!! warning "'My band change didn't stick'"
     `pv.Bands.GetBottomBandItems()` returns a **copy**. Modifying it does nothing
     until you push it back with `SetBottomBandItems(...)`.
-
-**Do instead:** always pair `Get...` with `Set...`.
 
 ```python
 items = pv.Bands.GetBottomBandItems()
@@ -206,17 +315,21 @@ standardise on CPython 3 for new work.
 
 ```mermaid
 flowchart TD
-    A["Narrow your excepts"] --> B["Log which item + step failed"]
-    B --> C["Fail loudly only when fatal"]
-    C --> D["Degrade + record everything else"]
-    D --> E["Run a linter"]
-    E --> F["Tune with data, not vibes"]
+    A["Explicit clr.AddReference"] --> B["with lock + with transaction"]
+    B --> C["Commit only after success"]
+    C --> D["Narrow excepts + skip/record"]
+    D --> E["Fatal → results['Errors']"]
+    E --> F["unload_package, not reload"]
+    F --> G["RAISE_ON_ERROR by context"]
+    G --> H["Tune with data, not vibes"]
 ```
 
 !!! success "Trustworthy > clever"
     Most of these gotchas share one cure: **make failures visible.** A script that
-    tells you exactly what went wrong, on which item, is worth ten clever scripts
-    that fail silently.
+    tells you exactly what went wrong — `Success`, `Errors`, `Traceback`, `Skipped`,
+    `ModuleFile` — on which item, is worth ten clever scripts that fail silently.
 
-See also: the [Cookbook](cookbook.md) for the correct patterns, and the
-[Glossary](glossary.md) for any unfamiliar term.
+See also: the [Cookbook](cookbook.md) for the correct patterns (including the
+[`results` schema](cookbook.md#the-results-schema-read-this-once) and the
+[loader node](cookbook.md#recipe-7--the-dynamo-loader-node-for-modular-development-in-cursor)),
+and the [Glossary](glossary.md) for any unfamiliar term.

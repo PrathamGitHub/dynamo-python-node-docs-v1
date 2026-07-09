@@ -99,13 +99,26 @@ Create/edit `.vscode/settings.json` in the repo root:
 
 ```json
 {
-  "python.analysis.stubPath": "typings",
+  "python.analysis.stubPath": "/mnt/c/Users/pbarane1/Documents/c3d2025_stubs_v6/typings",
+  "python.analysis.extraPaths": [
+    "/mnt/c/Users/pbarane1/Documents/c3d2025_stubs_v6/typings"
+  ],
   "python.analysis.typeCheckingMode": "basic",
+  "python.analysis.autoImportCompletions": true,
   "python.analysis.diagnosticSeverityOverrides": {
     "reportMissingImports": "none",
     "reportMissingModuleSource": "none"
   },
-  "python.languageServer": "Pylance"
+  "cursorpyright.analysis.autoImportCompletions": true,
+  "cursorpyright.analysis.diagnosticSeverityOverrides": {
+    "reportMissingImports": "none",
+    "reportMissingModuleSource": "none"
+  },
+  "cursorpyright.analysis.extraPaths": [
+    "/mnt/c/Users/pbarane1/Documents/c3d2025_stubs_v6/typings"
+  ],
+  "cursorpyright.analysis.stubPath": "/mnt/c/Users/pbarane1/Documents/c3d2025_stubs_v6/typings",
+  "cursorpyright.analysis.typeCheckingMode": "basic"
 }
 ```
 
