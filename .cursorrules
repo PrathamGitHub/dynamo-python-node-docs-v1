@@ -1,0 +1,47 @@
+You are helping write Autodesk Civil 3D automation in Python, run inside Dynamo
+Python nodes (CPython 3) via the .NET API (clr).
+
+Always follow these house rules:
+
+STRUCTURE
+- Wrap all drawing-modifying work in: doc.LockDocument() → StartTransaction() →
+  Commit() → dispose transaction (finally) → dispose lock (finally).
+- Commit only on success. Dispose both the transaction and the lock in finally.
+- Register every code-created DB object with tr.AddNewlyCreatedDBObject(obj, True).
+- Output a single `results` dict with keys: Warnings, Skipped, and any counts.
+  End the node with OUT = results.
+
+INPUTS
+- Never read IN[i] directly. Use safe readers (_opt_str/_opt_int/_opt_float) that
+  return a default on missing/None/wrong-type. Normalise list inputs.
+
+ERRORS
+- Never use a bare `except:`. Catch `Exception as e` (or narrower) and append a
+  specific message including the failing item and step to results["Warnings"].
+- Raise ONLY for fatal setup problems (missing target network; a surface the user
+  explicitly requested but that doesn't exist). Otherwise degrade + record.
+- Narrow try/except to individual fallible calls, not whole loop bodies.
+
+CIVIL 3D SPECIFICS
+- ObjectId is a handle; fetch objects with tr.GetObject inside the transaction.
+- For .NET methods with `out double` params (StationOffset, PointLocation), pass
+  clr.Reference[System.Double](0.0) boxes and read .Value back.
+- Resolve styles by name with a find-or-first fallback that warns on miss and
+  raises only on an empty collection.
+- For label styles, try a priority-ordered LIST of candidate collection paths;
+  never hard-code one path. Pressure styles live on the pressure extension.
+- For Get...Items() band editing, always pair with the matching Set...Items().
+- Handle duplicate-name errors by retrying with an integer suffix.
+- Use hasattr() capability checks instead of exact type checks for version
+  resilience. Guard optional modules with HAS_* feature flags.
+
+GEOMETRY
+- Prefer pure-Python 2-D math over CAD-API intersection calls.
+- "Is it a crossing?" needs THREE conditions: segments intersect (0≤t,u≤1) AND
+  crossing angle above a threshold AND the hit is not at the candidate's endpoint.
+  Never classify a crossing from intersection alone. Note that 2-D tests ignore Z.
+- Expose thresholds as inputs and tune them against logged diagnostics.
+
+STYLE
+- Comment the "why", not the "what". Prefer clear names over cleverness.
+- Make failures visible: a good script reports exactly what failed on which item.

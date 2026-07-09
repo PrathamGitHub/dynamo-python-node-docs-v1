@@ -8,3 +8,7 @@ wheels/
 
 # Virtual environments
 .venv
+
+# folders to be ignored
+duckdb/
+automations/
