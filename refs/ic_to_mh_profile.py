@@ -337,14 +337,14 @@ def line_intersects_alignment_poly(aln_pline, p1, p2):
         return False
 
 def station_offset(aln, x, y):
-    """
-    Proper by-ref doubles for pythonnet:
-      clr.Reference[System.Double](0.0)
-    """
-    st = clr.Reference[System.Double](0.0)
-    off = clr.Reference[System.Double](0.0)
-    aln.StationOffset(x, y, st, off)
-    return float(st.Value), float(off.Value)
+    # pythonnet (CPython 3) has no clr.Reference. For `void StationOffset(
+    # x, y, out double station, out double offset)` we pass dummy Doubles for
+    # the two out params; their type drives overload resolution and the real
+    # values come back as a return tuple (station, offset).
+    st = 0.0
+    off = 0.0
+    _, st, off = aln.StationOffset(x, y, st, off)
+    return st, off
 
 def endpoint_on_alignment(aln, pt, tol):
     try:

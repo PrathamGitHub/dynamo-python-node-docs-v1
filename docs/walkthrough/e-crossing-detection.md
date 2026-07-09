@@ -8,7 +8,7 @@
     turn the *bug* into a lesson.
 
 !!! warning "Remember: the example script is a teaching sample, not a template"
-    We keep its **good ideas** (pure-Python 2-D math, `StationOffset` by reference)
+    We keep its **good ideas** (pure-Python 2-D math, `StationOffset` out-params)
     and **replace its weak logic** (a too-loose "alongside" filter) with a better
     approach. Copy the boxed *recommended* code, not the original.
 
@@ -90,35 +90,33 @@ own ruler: **station** (distance *along*) and **offset** (distance *sideways*).
 Civil 3D gives us `Alignment.StationOffset(...)`, but there's a catch that trips
 up every newcomer.
 
-### The by-reference gotcha
+### The `out`-parameter gotcha
 
-`StationOffset` doesn't *return* the two numbers. It expects you to hand it two
-**empty boxes** and it fills them in — this is a C#/.NET pattern called
-**`out` parameters** ("output parameters, passed by reference"). In Python we make
-those boxes with `clr.Reference`:
+`StationOffset` doesn't *return* the two numbers the obvious way. In C# it writes
+them into **`out` parameters** ("output parameters, passed by reference"). Under
+**pythonnet / CPython 3** there is no `clr.Reference`; pass dummy `0.0` doubles
+for each `out` slot — their type drives overload resolution — and unpack the
+return tuple:
 
 ```python
-import clr, System
-
 def station_offset(aln, x, y):
     """Return (station, offset) of world point (x, y) on the alignment.
-    StationOffset writes its answers into by-reference doubles, so we
-    hand it two clr.Reference boxes and read them back afterwards."""
-    st  = clr.Reference[System.Double](0.0)   # empty box #1
-    off = clr.Reference[System.Double](0.0)   # empty box #2
-    aln.StationOffset(x, y, st, off)          # Civil 3D fills the boxes
-    return float(st.Value), float(off.Value)  # read the boxes back
+    StationOffset writes into out doubles; we pass dummy 0.0s and read the
+    values back from the return tuple."""
+    st = 0.0
+    off = 0.0
+    _, st, off = aln.StationOffset(x, y, st, off)
+    return st, off
 ```
 
 !!! danger "The classic 'it returned nothing and no error' trap"
-    If you call `StationOffset` (or `PointLocation`) the normal Python way,
-    expecting a return value, you get **nothing and no error** — because the real
-    answers went into the `out` boxes you didn't provide. This exact confusion is
-    all over the forums.
+    If you call `StationOffset(x, y)` (or `PointLocation(st, off)`) without the
+    out doubles, you get **nothing and no error** — pythonnet picks the wrong
+    overload. This exact confusion is all over the forums.
     ([Dynamo forum: PointLocation with Python](https://forum.dynamobim.com/t/how-to-use-civil-3d-api-command-alignment-pointlocation-station-offset-easting-northing-with-python/82232))
 
     **Rule:** any Civil 3D method whose C# signature has `out double x` needs a
-    `clr.Reference[System.Double](0.0)` box in Python.
+    dummy `0.0` for each `out` slot under CPython 3, then unpack the return tuple.
 
 Now `offset` is exactly what we need: a pipe endpoint whose **offset ≈ 0** sits
 *on* the alignment; a large offset sits *far to the side*.
@@ -295,7 +293,7 @@ results["Crossings"]["Diagnostics"] = diag   # read it in a Dynamo Watch node
 |---|---|
 | **Do geometry in pure Python** | No CAD-API dependency, fast, unit-testable |
 | **`t` and `u` are gold** | `t` = along alignment, `u` = along candidate — use `u` to reject endpoint touches |
-| **`out double` → `clr.Reference`** | Any `StationOffset`/`PointLocation`-style call needs by-ref boxes |
+| **`out double` → dummy doubles** | Any `StationOffset`/`PointLocation`-style call needs out slots + tuple unpack |
 | **One condition is never enough** | Real classification = intersection **and** angle **and** endpoint guard |
 | **Tune with logged data** | Emit diagnostics before trusting a threshold |
 | **State your assumptions** | This is 2-D; Z is ignored — say so, loudly |

@@ -970,16 +970,14 @@ def segments_intersect_2d(x1, y1, x2, y2, x3, y3, x4, y4):
     return 0.0 <= t <= 1.0 and 0.0 <= u <= 1.0
 
 def station_offset(aln, x, y):
-    """
-    Compute the Civil 3D station and offset of world point (x, y) relative to
-    the alignment. Uses clr.Reference (by-reference doubles) as required by
-    the pythonnet binding of the Alignment.StationOffset() API.
-    Returns: (station, offset) as Python floats.
-    """
-    st  = clr.Reference[System.Double](0.0)
-    off = clr.Reference[System.Double](0.0)
-    aln.StationOffset(x, y, st, off)
-    return float(st.Value), float(off.Value)
+    # pythonnet (CPython 3) has no clr.Reference. For `void StationOffset(
+    # x, y, out double station, out double offset)` we pass dummy Doubles for
+    # the two out params; their type drives overload resolution and the real
+    # values come back as a return tuple (station, offset).
+    st = 0.0
+    off = 0.0
+    _, st, off = aln.StationOffset(x, y, st, off)
+    return st, off
 
 def endpoint_on_alignment(aln, pt, tol):
     """

@@ -285,10 +285,10 @@ RAISE_ON_ERROR = False
 ??? success "Show solution"
     ```python
     def station_offset(aln, x, y):
-        st  = clr.Reference[System.Double](0.0)
-        off = clr.Reference[System.Double](0.0)
-        aln.StationOffset(x, y, st, off)                 # fills the boxes
-        return float(st.Value), float(off.Value)
+        st = 0.0
+        off = 0.0
+        _, st, off = aln.StationOffset(x, y, st, off)
+        return st, off
 
     def endpoint_on_alignment(aln, x, y, tol):           # stretch
         try:
@@ -326,8 +326,8 @@ RAISE_ON_ERROR = False
         if RAISE_ON_ERROR: raise
     OUT = results
     ```
-    The trap to feel first: `aln.StationOffset(x, y)` with no boxes returns nothing
-    and raises nothing — the answers had nowhere to go.
+    The trap to feel first: `aln.StationOffset(x, y)` with no out doubles returns
+    nothing and raises nothing — pythonnet picks the wrong overload.
 
 ---
 
@@ -602,7 +602,7 @@ You can consider the onboarding complete when you can, **without looking anythin
 - [ ] Read any input safely and explain why bare `IN[i]` is dangerous.
 - [ ] Create, update, and erase a database object (and register created objects).
 - [ ] Resolve a style with graceful fallback, and know when to raise vs. warn.
-- [ ] Call an `out`-parameter method with `clr.Reference` and explain the silent trap.
+- [ ] Call an `out`-parameter method with dummy doubles and explain the silent trap.
 - [ ] Classify a crossing with the three-question test and explain the buggy version.
 - [ ] Structure a batch loop that skips-and-records bad items and fails only on fatal.
 - [ ] Split logic into a `run(context)` module launched by the loader node, and know

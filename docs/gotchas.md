@@ -234,8 +234,9 @@ tr.AddNewlyCreatedDBObject(pl, True)         # ✅ always pair these two lines
     parameters. Called the normal Python way they appear to return nothing — the
     answers went into boxes you didn't provide.
 
-**Do instead:** pass `clr.Reference[System.Double](0.0)` boxes and read `.Value` back
-(Cookbook recipe 5).
+**Do instead:** pass dummy `0.0` values for each `out double` slot and unpack the
+return tuple — e.g. `_, st, off = aln.StationOffset(x, y, st, off)` (Cookbook
+recipe 5). `clr.Reference` is not available under pythonnet / CPython 3.
 ([Dynamo forum](https://forum.dynamobim.com/t/how-to-use-civil-3d-api-command-alignment-pointlocation-station-offset-easting-northing-with-python/82232))
 
 ---

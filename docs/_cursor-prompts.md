@@ -50,7 +50,8 @@ ERRORS
 CIVIL 3D SPECIFICS
 - ObjectId is a handle; fetch objects with tr.GetObject inside the transaction.
 - For .NET methods with `out double` params (StationOffset, PointLocation), pass
-  clr.Reference[System.Double](0.0) boxes and read .Value back.
+  dummy 0.0 doubles and unpack the return tuple (e.g.
+  `_, st, off = aln.StationOffset(x, y, st, off)`). No clr.Reference on CPython 3.
 - Resolve styles by name with a find-or-first fallback that warns on miss and
   raises only on an empty collection.
 - For label styles, try a priority-ordered LIST of candidate collection paths;
@@ -110,7 +111,7 @@ Diagnose likely causes in priority order, based on my .cursorrules:
 1. A bare except: swallowing a real error.
 2. Missing tr.Commit().
 3. Missing doc.LockDocument() (eLockViolation).
-4. An out-param method (StationOffset/PointLocation) called without clr.Reference.
+4. An out-param method (StationOffset/PointLocation) called without dummy out doubles.
 5. Get...Items() modified but never Set...Items() back.
 6. Unreachable code after a return.
 For each, tell me how to confirm it and how to fix it. Script below.

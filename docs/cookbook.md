@@ -208,24 +208,31 @@ def try_get_point3d(obj):
 
 ---
 
-## Recipe 5 — Call a method with `out` parameters (`clr.Reference`)
+## Recipe 5 — Call a method with `out` parameters (CPython 3)
 
 **Use when:** a Civil 3D method's C# signature has `out double ...`
-(e.g. `StationOffset`, `PointLocation`). Python needs by-reference boxes.
+(e.g. `StationOffset`, `PointLocation`). Under **pythonnet / CPython 3** there is
+no `clr.Reference`; pass dummy `0.0` doubles for each `out` slot — their type
+drives overload resolution — and unpack the return tuple.
 
 ```python
-import clr, System
-
 def station_offset(aln, x, y):
-    st  = clr.Reference[System.Double](0.0)
-    off = clr.Reference[System.Double](0.0)
-    aln.StationOffset(x, y, st, off)          # fills the boxes
-    return float(st.Value), float(off.Value)
+    st = 0.0
+    off = 0.0
+    _, st, off = aln.StationOffset(x, y, st, off)
+    return st, off
+
+def point_location(aln, st, off=0.0):
+    x = 0.0
+    y = 0.0
+    _, x, y = aln.PointLocation(st, off, x, y)
+    return x, y
 ```
 
 !!! danger "The silent-failure trap"
-    Call these methods without `clr.Reference` boxes and you get **no value and no
-    error**. If a Civil 3D call "returns nothing," check for `out` params first.
+    Call `StationOffset(x, y)` with no out doubles and you get **no value and no
+    error** — pythonnet picks the wrong overload. If a Civil 3D call "returns
+    nothing," check for `out` params first.
 
 ---
 

@@ -126,8 +126,10 @@ dict.
 **`clr.AddReference("...")`** — makes a .NET assembly (DLL) importable, like a `pip
 install` for .NET.
 
-**`clr.Reference[System.Double](0.0)`** — a by-reference "box" used to receive `out`
-parameters from .NET methods.
+**`out double` / dummy doubles** — C# methods such as `StationOffset` write answers
+into `out` parameters. Under **pythonnet / CPython 3** (no `clr.Reference`), pass
+dummy `0.0` doubles for each `out` slot and unpack the return tuple, e.g.
+`_, st, off = aln.StationOffset(x, y, st, off)`.
 
 **IronPython 2 / CPython 3** — the two Python engines Dynamo can use. They differ in
 syntax and some behaviours; don't mix code between them.

@@ -198,25 +198,27 @@ matched.
 
 ---
 
-## Exercise 7 — Out-parameters (`clr.Reference`)
+## Exercise 7 — Out-parameters (dummy doubles)
 
 **Goal:** for a given world point, get its **station and offset** on an alignment.
 
-**Practise:** [`clr.Reference[System.Double]`](../cookbook.md#recipe-5--call-a-method-with-out-parameters-clrreference);
+**Practise:** [dummy doubles for `out` params](../cookbook.md#recipe-5--call-a-method-with-out-parameters-cpython-3);
 recognising the silent-failure trap.
 
 **Steps**
 
 1. Pick any alignment in the scratch drawing.
-2. Implement `station_offset(aln, x, y)` using two `clr.Reference` boxes.
+2. Implement `station_offset(aln, x, y)` with dummy `0.0` out doubles and unpack
+   the return tuple.
 3. Feed it a point you know lies on/near the alignment; return `(station, offset)`.
 
 **Acceptance test:** offset ≈ 0 for a point on the centreline; a sensible station
 value matching Civil 3D's own readout.
 
 !!! danger "Feel the trap first"
-    Call `StationOffset` *without* the reference boxes and observe you get **nothing
-    and no error**. Then do it correctly. This memory will save you hours later.
+    Call `StationOffset(x, y)` *without* the out doubles and observe you get
+    **nothing and no error**. Then do it correctly. This memory will save you hours
+    later.
 
 **Stretch:** write `endpoint_on_alignment(aln, pt, tol)` returning `abs(offset) <=
 tol`, and test it against a point you know is off to the side.
