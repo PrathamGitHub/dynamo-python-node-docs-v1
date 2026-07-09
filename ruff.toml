@@ -1,0 +1,7 @@
+target-version = "py314"
+line-length = 100
+
+[lint]
+select = ["E", "F", "W", "B", "UP", "SIM"]
+# B012/B014 = broad-except issues; F811 unreachable; F841 unused; E722 bare except
+ignore = ["E501"]     # long lines OK; we wrap manually
