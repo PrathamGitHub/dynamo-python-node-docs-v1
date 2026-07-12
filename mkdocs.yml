@@ -68,11 +68,15 @@ markdown_extensions:
         - name: mermaid
           class: mermaid
           format: !!python/name:pymdownx.superfences.fence_code_format
+  - pymdownx.arithmatex:
+      generic: true
 
 extra_javascript:
   - https://unpkg.com/mermaid@10/dist/mermaid.min.js
   - assets/mermaid-init.js
-
+  - assets/mathjax.js
+  - https://unpkg.com/mathjax@3/es5/tex-mml-chtml.js
+  
 extra_css:
   - stylesheets/extra.css
 
@@ -110,3 +114,8 @@ nav:
       - Dynamo Node Workflow: dev-env/dynamo-node-workflow.md
       - Exercises: dev-env/exercises.md
       - Exercise Solutions: dev-env/exercise-solutions.md
+  - Major Project:
+      - Overview: major-project/00-overview.md
+      - Domain Primer: major-project/01-domain-primer.md
+      - Extraction: major-project/02-extraction.md
+      - Crossing Detection: major-project/03-crossing-detection.md
