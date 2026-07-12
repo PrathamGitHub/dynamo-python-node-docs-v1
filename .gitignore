@@ -11,4 +11,5 @@ wheels/
 
 # folders to be ignored
 duckdb/
-automations/
+data/
+Site-packages/

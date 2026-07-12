@@ -1,0 +1,708 @@
+{
+  "Uuid": "8a5716fb-6118-4d7e-be02-8dee45d70765",
+  "IsCustomNode": false,
+  "Description": "",
+  "Name": "ex08_network_crossings",
+  "ElementResolver": {
+    "ResolutionMap": {}
+  },
+  "Inputs": [],
+  "Outputs": [],
+  "Nodes": [
+    {
+      "ConcreteType": "PythonNodeModels.PythonNode, PythonNodeModels",
+      "Code": "import sys, clr, importlib, traceback\r\n\r\nclr.AddReference(\"AcMgd\"); clr.AddReference(\"AcCoreMgd\"); clr.AddReference(\"AcDbMgd\")\r\nclr.AddReference(\"AecBaseMgd\"); clr.AddReference(\"AecPropDataMgd\"); clr.AddReference(\"AeccDbMgd\")\r\n\r\nfrom Autodesk.AutoCAD.ApplicationServices.Core import Application\r\nfrom Autodesk.Civil.ApplicationServices import CivilApplication\r\n\r\n# --- repo path (edit to your clone) ---\r\nREPO = r\"\\\\wsl.localhost\\Ubuntu-24.04\\home\\wsl\\work\\project\\dynamo-python-node-docs-v1\"\r\nif REPO not in sys.path:\r\n    sys.path.insert(0, REPO)\r\n\r\n# --- force-reload the WHOLE package so nested helper edits are picked up ---\r\ndef unload_package(package_name):\r\n    for name in list(sys.modules.keys()):\r\n        if name == package_name or name.startswith(package_name + \".\"):\r\n            del sys.modules[name]\r\n\r\n# --- active document context ---\r\ndoc    = Application.DocumentManager.MdiActiveDocument\r\ndb     = doc.Database\r\ned     = doc.Editor\r\ncivdoc = CivilApplication.ActiveDocument\r\n\r\nresults = {\"Success\": False, \"Warnings\": [], \"Errors\": [], \"Skipped\": [], \"Data\": None}\r\nRAISE_ON_ERROR = False\r\n\r\ntry:\r\n    importlib.invalidate_caches()\r\n    unload_package(\"exercises\")                                  # drop cached modules\r\n    mod = importlib.import_module(\"exercises.ex08_geometry\")\r\n\r\n    with doc.LockDocument():\r\n        with db.TransactionManager.StartTransaction() as tr:\r\n            context = {\"doc\": doc, \"db\": db, \"ed\": ed,\r\n                       \"civdoc\": civdoc, \"tr\": tr, \"IN\": IN}\r\n            results[\"Data\"] = mod.run(context)                     # module does the work\r\n            tr.Commit()\r\n\r\n    results[\"Success\"] = True\r\n    results[\"ModuleFile\"] = getattr(mod, \"__file__\", None)         # confirms which file ran\r\nexcept Exception as ex:\r\n    results[\"Errors\"].append(str(ex))\r\n    results[\"Traceback\"] = traceback.format_exc()\r\n    if RAISE_ON_ERROR:\r\n        raise\r\n\r\nOUT = results",
+      "Engine": "CPython3",
+      "VariableInputPorts": true,
+      "Id": "bc42a5e76b404942af411a9e1cb617cb",
+      "NodeType": "PythonScriptNode",
+      "Inputs": [
+        {
+          "Id": "63b2dbde66064d23977a53aa3d44375d",
+          "Name": "IN[0]",
+          "Description": "Input #0",
+          "UsingDefaultValue": false,
+          "Level": 2,
+          "UseLevels": false,
+          "KeepListStructure": false
+        },
+        {
+          "Id": "3d8673d6e417476cb7d4af25c544d886",
+          "Name": "IN[1]",
+          "Description": "Input #1",
+          "UsingDefaultValue": false,
+          "Level": 2,
+          "UseLevels": false,
+          "KeepListStructure": false
+        },
+        {
+          "Id": "50989f389b584f318990ea08f7035f43",
+          "Name": "IN[2]",
+          "Description": "Input #2",
+          "UsingDefaultValue": false,
+          "Level": 2,
+          "UseLevels": false,
+          "KeepListStructure": false
+        }
+      ],
+      "Outputs": [
+        {
+          "Id": "87bd0fb342dd4ba6adb40cc2f830c968",
+          "Name": "OUT",
+          "Description": "Result of the python script",
+          "UsingDefaultValue": false,
+          "Level": 2,
+          "UseLevels": false,
+          "KeepListStructure": false
+        }
+      ],
+      "Replication": "Disabled",
+      "Description": "Runs an embedded Python script."
+    },
+    {
+      "ConcreteType": "CoreNodeModels.Watch, CoreNodeModels",
+      "WatchWidth": 1081.0,
+      "WatchHeight": 487.0,
+      "Id": "191de2179a464fcdb43bd3953f7281c3",
+      "NodeType": "ExtensionNode",
+      "Inputs": [
+        {
+          "Id": "a60c7cc5cb284963a683e3ce418d1dbd",
+          "Name": "",
+          "Description": "Node to show output from",
+          "UsingDefaultValue": false,
+          "Level": 2,
+          "UseLevels": false,
+          "KeepListStructure": false
+        }
+      ],
+      "Outputs": [
+        {
+          "Id": "8db0b1411b9743479fae36b6f22aeae9",
+          "Name": "",
+          "Description": "Node output",
+          "UsingDefaultValue": false,
+          "Level": 2,
+          "UseLevels": false,
+          "KeepListStructure": false
+        }
+      ],
+      "Replication": "Disabled",
+      "Description": "Visualizes a node's output"
+    },
+    {
+      "ConcreteType": "CoreNodeModels.Input.IntegerSlider, CoreNodeModels",
+      "NumberType": "Integer",
+      "MaximumValue": 100,
+      "MinimumValue": 0,
+      "StepValue": 1,
+      "Id": "ba09bdd39f8e4d00af349b93dc2bd3ab",
+      "NodeType": "NumberInputNode",
+      "Inputs": [],
+      "Outputs": [
+        {
+          "Id": "1105e05079c3476b8b7d7f6ff804e403",
+          "Name": "",
+          "Description": "Int64",
+          "UsingDefaultValue": false,
+          "Level": 2,
+          "UseLevels": false,
+          "KeepListStructure": false
+        }
+      ],
+      "Replication": "Disabled",
+      "Description": "Produces integer values",
+      "InputValue": 33
+    },
+    {
+      "ConcreteType": "Dynamo.Graph.Nodes.CodeBlockNodeModel, DynamoCore",
+      "Id": "a9bdceeadb094624b019b76963d83315",
+      "NodeType": "CodeBlockNode",
+      "Inputs": [],
+      "Outputs": [
+        {
+          "Id": "8433d28b201f4d388f9ea99080e8bb14",
+          "Name": "",
+          "Description": "Value of expression at line 1",
+          "UsingDefaultValue": false,
+          "Level": 2,
+          "UseLevels": false,
+          "KeepListStructure": false
+        },
+        {
+          "Id": "b414c3ab948f47c196dfd2f6d7230372",
+          "Name": "",
+          "Description": "Value of expression at line 2",
+          "UsingDefaultValue": false,
+          "Level": 2,
+          "UseLevels": false,
+          "KeepListStructure": false
+        }
+      ],
+      "Replication": "Disabled",
+      "Description": "Allows for DesignScript code to be authored directly",
+      "Code": "1.1;\n0.2;"
+    },
+    {
+      "ConcreteType": "PythonNodeModels.PythonNode, PythonNodeModels",
+      "Code": "import sys, clr, importlib, traceback\r\n\r\nclr.AddReference(\"AcMgd\"); clr.AddReference(\"AcCoreMgd\"); clr.AddReference(\"AcDbMgd\")\r\nclr.AddReference(\"AecBaseMgd\"); clr.AddReference(\"AecPropDataMgd\"); clr.AddReference(\"AeccDbMgd\")\r\n\r\nfrom Autodesk.AutoCAD.ApplicationServices.Core import Application\r\nfrom Autodesk.Civil.ApplicationServices import CivilApplication\r\n\r\n# --- repo path (edit to your clone) ---\r\nREPO = r\"\\\\wsl.localhost\\Ubuntu-24.04\\home\\wsl\\work\\project\\dynamo-python-node-docs-v1\"\r\nif REPO not in sys.path:\r\n    sys.path.insert(0, REPO)\r\n    sys.path.append(f\"{REPO}/Site-packages\")\r\n    \r\ndef unload_package(package_name):\r\n    for name in list(sys.modules.keys()):\r\n        if name == package_name or name.startswith(package_name + \".\"):\r\n            del sys.modules[name]\r\n\r\n# --- active document context ---\r\ndoc    = Application.DocumentManager.MdiActiveDocument\r\ndb     = doc.Database\r\ned     = doc.Editor\r\ncivdoc = CivilApplication.ActiveDocument\r\n\r\nresults = {\"Success\": False, \"Warnings\": [], \"Errors\": [], \"Skipped\": [], \"Data\": None}\r\nRAISE_ON_ERROR = False\r\n\r\ntry:\r\n    importlib.invalidate_caches()\r\n    unload_package(\"exercises\")                                  # drop cached modules\r\n    mod = importlib.import_module(\"exercises.ex08_network_crossings\")\r\n\r\n    with doc.LockDocument():\r\n        with db.TransactionManager.StartTransaction() as tr:\r\n            context = {\"doc\": doc, \"db\": db, \"ed\": ed,\r\n                       \"civdoc\": civdoc, \"tr\": tr, \"IN\": IN}\r\n            results[\"Data\"] = mod.run(context)                     # module does the work\r\n            tr.Commit()\r\n\r\n    results[\"Success\"] = True\r\n    results[\"ModuleFile\"] = getattr(mod, \"__file__\", None)         # confirms which file ran\r\nexcept Exception as ex:\r\n    results[\"Errors\"].append(str(ex))\r\n    results[\"Traceback\"] = traceback.format_exc()\r\n    if RAISE_ON_ERROR:\r\n        raise\r\n\r\nOUT = results",
+      "Engine": "CPython3",
+      "VariableInputPorts": true,
+      "Id": "c11bb81860b143cf917744d4386a0914",
+      "NodeType": "PythonScriptNode",
+      "Inputs": [
+        {
+          "Id": "111a71e45fab49ae871485a07f17ffb3",
+          "Name": "IN[0]",
+          "Description": "Input #0",
+          "UsingDefaultValue": false,
+          "Level": 2,
+          "UseLevels": false,
+          "KeepListStructure": false
+        },
+        {
+          "Id": "4e5306354cfb44bcb0b849d050617aec",
+          "Name": "IN[1]",
+          "Description": "Input #1",
+          "UsingDefaultValue": false,
+          "Level": 2,
+          "UseLevels": false,
+          "KeepListStructure": false
+        },
+        {
+          "Id": "b075e81d1bca4623af3bab7702a098fd",
+          "Name": "IN[2]",
+          "Description": "Input #2",
+          "UsingDefaultValue": false,
+          "Level": 2,
+          "UseLevels": false,
+          "KeepListStructure": false
+        }
+      ],
+      "Outputs": [
+        {
+          "Id": "fc4d073a9fa848a1aa003b267ce258b5",
+          "Name": "OUT",
+          "Description": "Result of the python script",
+          "UsingDefaultValue": false,
+          "Level": 2,
+          "UseLevels": false,
+          "KeepListStructure": false
+        }
+      ],
+      "Replication": "Disabled",
+      "Description": "Runs an embedded Python script."
+    },
+    {
+      "ConcreteType": "CoreNodeModels.Input.IntegerSlider, CoreNodeModels",
+      "NumberType": "Integer",
+      "MaximumValue": 100,
+      "MinimumValue": 0,
+      "StepValue": 1,
+      "Id": "04b5a18e1439415a9700e9fb8323659e",
+      "NodeType": "NumberInputNode",
+      "Inputs": [],
+      "Outputs": [
+        {
+          "Id": "ae50cd62ace24bfba6a03c83510b8432",
+          "Name": "",
+          "Description": "Int64",
+          "UsingDefaultValue": false,
+          "Level": 2,
+          "UseLevels": false,
+          "KeepListStructure": false
+        }
+      ],
+      "Replication": "Disabled",
+      "Description": "Produces integer values",
+      "InputValue": 27
+    },
+    {
+      "ConcreteType": "CoreNodeModels.Watch, CoreNodeModels",
+      "WatchWidth": 1405.0,
+      "WatchHeight": 495.0,
+      "Id": "3b26bddfbb58495fb7dbb1a643d1337f",
+      "NodeType": "ExtensionNode",
+      "Inputs": [
+        {
+          "Id": "4e703e4959634e75912699dd3d7d88da",
+          "Name": "",
+          "Description": "Node to show output from",
+          "UsingDefaultValue": false,
+          "Level": 2,
+          "UseLevels": false,
+          "KeepListStructure": false
+        }
+      ],
+      "Outputs": [
+        {
+          "Id": "1b65176b8dbe49ad947488b319f3e3d5",
+          "Name": "",
+          "Description": "Node output",
+          "UsingDefaultValue": false,
+          "Level": 2,
+          "UseLevels": false,
+          "KeepListStructure": false
+        }
+      ],
+      "Replication": "Disabled",
+      "Description": "Visualizes a node's output"
+    },
+    {
+      "ConcreteType": "CoreNodeModels.Input.StringInput, CoreNodeModels",
+      "Id": "de609ab0560648658cba5b53cc5cf8ea",
+      "NodeType": "StringInputNode",
+      "Inputs": [],
+      "Outputs": [
+        {
+          "Id": "6a354ac04cf949259b80ddf5867f1fba",
+          "Name": "",
+          "Description": "String",
+          "UsingDefaultValue": false,
+          "Level": 2,
+          "UseLevels": false,
+          "KeepListStructure": false
+        }
+      ],
+      "Replication": "Disabled",
+      "Description": "Creates a string",
+      "InputValue": "\\\\wsl.localhost\\Ubuntu-24.04\\home\\wsl\\work\\project\\dynamo-python-node-docs-v1\\data\\test.ddb"
+    },
+    {
+      "ConcreteType": "CoreNodeModels.Input.DoubleSlider, CoreNodeModels",
+      "NumberType": "Double",
+      "MaximumValue": 5.0,
+      "MinimumValue": 0.0,
+      "StepValue": 0.05,
+      "Id": "a7495220bf524154aecdd132d96c111f",
+      "NodeType": "NumberInputNode",
+      "Inputs": [],
+      "Outputs": [
+        {
+          "Id": "9a8981dbc3aa49e6b5195595f557b36f",
+          "Name": "",
+          "Description": "Double",
+          "UsingDefaultValue": false,
+          "Level": 2,
+          "UseLevels": false,
+          "KeepListStructure": false
+        }
+      ],
+      "Replication": "Disabled",
+      "Description": "Produces numeric values",
+      "InputValue": 0.45
+    },
+    {
+      "ConcreteType": "CoreNodeModels.CreateList, CoreNodeModels",
+      "VariableInputPorts": true,
+      "Id": "8bbdfe899f72446b8117b3d9f1bf068e",
+      "NodeType": "ExtensionNode",
+      "Inputs": [
+        {
+          "Id": "a3e4d6bf3833467a9e7f40247486436b",
+          "Name": "item0",
+          "Description": "Item Index #0",
+          "UsingDefaultValue": false,
+          "Level": 2,
+          "UseLevels": false,
+          "KeepListStructure": false
+        },
+        {
+          "Id": "3c3d7a1ea9d449de8056ffd316dc7b2c",
+          "Name": "item1",
+          "Description": "Item Index #1",
+          "UsingDefaultValue": false,
+          "Level": 2,
+          "UseLevels": false,
+          "KeepListStructure": false
+        }
+      ],
+      "Outputs": [
+        {
+          "Id": "318372874bd34a69aca6e948e2c163fb",
+          "Name": "list",
+          "Description": "A list (type: var[]..[])",
+          "UsingDefaultValue": false,
+          "Level": 2,
+          "UseLevels": false,
+          "KeepListStructure": false
+        }
+      ],
+      "Replication": "Disabled",
+      "Description": "Makes a new list from the given inputs"
+    },
+    {
+      "ConcreteType": "CoreNodeModels.Input.StringInput, CoreNodeModels",
+      "Id": "3a4881efc84647f0af9a200f0e0157f2",
+      "NodeType": "StringInputNode",
+      "Inputs": [],
+      "Outputs": [
+        {
+          "Id": "280a062751f345cc8834df6f410faa66",
+          "Name": "",
+          "Description": "String",
+          "UsingDefaultValue": false,
+          "Level": 2,
+          "UseLevels": false,
+          "KeepListStructure": false
+        }
+      ],
+      "Replication": "Disabled",
+      "Description": "Creates a string",
+      "InputValue": "YCC- WASTEWATER NETWORK"
+    },
+    {
+      "ConcreteType": "CoreNodeModels.Input.StringInput, CoreNodeModels",
+      "Id": "7c91df9b20cf47359df49a2ca1bc6bf6",
+      "NodeType": "StringInputNode",
+      "Inputs": [],
+      "Outputs": [
+        {
+          "Id": "aa129fe79b994e8a879869fe2bae64ed",
+          "Name": "",
+          "Description": "String",
+          "UsingDefaultValue": false,
+          "Level": 2,
+          "UseLevels": false,
+          "KeepListStructure": false
+        }
+      ],
+      "Replication": "Disabled",
+      "Description": "Creates a string",
+      "InputValue": "PN_TRENCH"
+    },
+    {
+      "ConcreteType": "CoreNodeModels.Watch, CoreNodeModels",
+      "WatchWidth": 200.0,
+      "WatchHeight": 434.0,
+      "Id": "8c6dcdc4c86a43d4afbe229ae50dce1f",
+      "NodeType": "ExtensionNode",
+      "Inputs": [
+        {
+          "Id": "5b2578f33f274c18b9cc8c28c1efc2f5",
+          "Name": "",
+          "Description": "Node to show output from",
+          "UsingDefaultValue": false,
+          "Level": 2,
+          "UseLevels": false,
+          "KeepListStructure": false
+        }
+      ],
+      "Outputs": [
+        {
+          "Id": "03b98b94ccda467cb8e4a7a3a2e3a9ea",
+          "Name": "",
+          "Description": "Node output",
+          "UsingDefaultValue": false,
+          "Level": 2,
+          "UseLevels": false,
+          "KeepListStructure": false
+        }
+      ],
+      "Replication": "Disabled",
+      "Description": "Visualizes a node's output"
+    },
+    {
+      "ConcreteType": "Dynamo.Graph.Nodes.CodeBlockNodeModel, DynamoCore",
+      "Id": "09a55b1adfc349189b95134f97658f0d",
+      "NodeType": "CodeBlockNode",
+      "Inputs": [
+        {
+          "Id": "9354018e8da449cdac67b92e6ccb15b2",
+          "Name": "x",
+          "Description": "x",
+          "UsingDefaultValue": false,
+          "Level": 2,
+          "UseLevels": false,
+          "KeepListStructure": false
+        }
+      ],
+      "Outputs": [
+        {
+          "Id": "fb42bac8f3e44677be5ae862517c69eb",
+          "Name": "",
+          "Description": "Value of expression at line 1",
+          "UsingDefaultValue": false,
+          "Level": 2,
+          "UseLevels": false,
+          "KeepListStructure": false
+        }
+      ],
+      "Replication": "Disabled",
+      "Description": "Allows for DesignScript code to be authored directly",
+      "Code": "x[\"Data\"][\"Skipped\"];"
+    }
+  ],
+  "Connectors": [
+    {
+      "Start": "87bd0fb342dd4ba6adb40cc2f830c968",
+      "End": "a60c7cc5cb284963a683e3ce418d1dbd",
+      "Id": "c2beb82311c04f85a7d3ac89033e12e7",
+      "IsHidden": "False"
+    },
+    {
+      "Start": "1105e05079c3476b8b7d7f6ff804e403",
+      "End": "50989f389b584f318990ea08f7035f43",
+      "Id": "bea708d10f8040bea7286b0c5215fb2b",
+      "IsHidden": "False"
+    },
+    {
+      "Start": "8433d28b201f4d388f9ea99080e8bb14",
+      "End": "63b2dbde66064d23977a53aa3d44375d",
+      "Id": "dc47bcd640b044ccb05ca2fb73815dd0",
+      "IsHidden": "False"
+    },
+    {
+      "Start": "b414c3ab948f47c196dfd2f6d7230372",
+      "End": "3d8673d6e417476cb7d4af25c544d886",
+      "Id": "45750250f69845579543dad087d1b7be",
+      "IsHidden": "False"
+    },
+    {
+      "Start": "fc4d073a9fa848a1aa003b267ce258b5",
+      "End": "4e703e4959634e75912699dd3d7d88da",
+      "Id": "ef6d4a1a3c904d279f2bb46ffb03b3a8",
+      "IsHidden": "False"
+    },
+    {
+      "Start": "fc4d073a9fa848a1aa003b267ce258b5",
+      "End": "9354018e8da449cdac67b92e6ccb15b2",
+      "Id": "6116f13f58ed46fcb6a0ef016c281ee3",
+      "IsHidden": "False"
+    },
+    {
+      "Start": "6a354ac04cf949259b80ddf5867f1fba",
+      "End": "b075e81d1bca4623af3bab7702a098fd",
+      "Id": "baad7c3958be4ace95be643380165e89",
+      "IsHidden": "False"
+    },
+    {
+      "Start": "9a8981dbc3aa49e6b5195595f557b36f",
+      "End": "4e5306354cfb44bcb0b849d050617aec",
+      "Id": "550100916c4a447dad4e9602a8d11251",
+      "IsHidden": "False"
+    },
+    {
+      "Start": "318372874bd34a69aca6e948e2c163fb",
+      "End": "111a71e45fab49ae871485a07f17ffb3",
+      "Id": "11f489d3165e4e23a6628d3dc680c34b",
+      "IsHidden": "False"
+    },
+    {
+      "Start": "280a062751f345cc8834df6f410faa66",
+      "End": "a3e4d6bf3833467a9e7f40247486436b",
+      "Id": "84f8c9ac9c9648279e6f596e2fc24146",
+      "IsHidden": "False"
+    },
+    {
+      "Start": "aa129fe79b994e8a879869fe2bae64ed",
+      "End": "3c3d7a1ea9d449de8056ffd316dc7b2c",
+      "Id": "5d7eee96cfe54398af4dce0d6ce9e95a",
+      "IsHidden": "False"
+    },
+    {
+      "Start": "fb42bac8f3e44677be5ae862517c69eb",
+      "End": "5b2578f33f274c18b9cc8c28c1efc2f5",
+      "Id": "6ad4ab008ca84775b70405c3bdb5a531",
+      "IsHidden": "False"
+    }
+  ],
+  "Dependencies": [],
+  "NodeLibraryDependencies": [
+    {
+      "Name": "test.ddb",
+      "ReferenceType": "External",
+      "Nodes": [
+        "de609ab0560648658cba5b53cc5cf8ea"
+      ]
+    }
+  ],
+  "EnableLegacyPolyCurveBehavior": true,
+  "Thumbnail": "",
+  "GraphDocumentationURL": null,
+  "ExtensionWorkspaceData": [
+    {
+      "ExtensionGuid": "28992e1d-abb9-417f-8b1b-05e053bee670",
+      "Name": "Properties",
+      "Version": "3.3",
+      "Data": {}
+    }
+  ],
+  "Author": "",
+  "Linting": {
+    "activeLinter": "None",
+    "activeLinterId": "7b75fb44-43fd-4631-a878-29f4d5d8399a",
+    "warningCount": 0,
+    "errorCount": 0
+  },
+  "Bindings": [],
+  "View": {
+    "Dynamo": {
+      "ScaleFactor": 1.0,
+      "HasRunWithoutCrash": true,
+      "IsVisibleInDynamoLibrary": true,
+      "Version": "3.3.1.7726",
+      "RunType": "Manual",
+      "RunPeriod": "1000"
+    },
+    "Camera": {
+      "Name": "_Background Preview",
+      "EyeX": -17.0,
+      "EyeY": 24.0,
+      "EyeZ": 50.0,
+      "LookX": 12.0,
+      "LookY": -13.0,
+      "LookZ": -58.0,
+      "UpX": 0.0,
+      "UpY": 1.0,
+      "UpZ": 0.0
+    },
+    "ConnectorPins": [],
+    "NodeViews": [
+      {
+        "Id": "bc42a5e76b404942af411a9e1cb617cb",
+        "Name": "Python Script",
+        "IsSetAsInput": false,
+        "IsSetAsOutput": false,
+        "Excluded": true,
+        "ShowGeometry": true,
+        "X": 264.0,
+        "Y": 212.0
+      },
+      {
+        "Id": "191de2179a464fcdb43bd3953f7281c3",
+        "Name": "Watch",
+        "IsSetAsInput": false,
+        "IsSetAsOutput": false,
+        "Excluded": false,
+        "ShowGeometry": true,
+        "X": 468.7575618564124,
+        "Y": 151.08096935851393
+      },
+      {
+        "Id": "ba09bdd39f8e4d00af349b93dc2bd3ab",
+        "Name": "Reload Token",
+        "IsSetAsInput": false,
+        "IsSetAsOutput": false,
+        "Excluded": false,
+        "ShowGeometry": true,
+        "X": -130.0,
+        "Y": 357.0
+      },
+      {
+        "Id": "a9bdceeadb094624b019b76963d83315",
+        "Name": "Code Block",
+        "IsSetAsInput": false,
+        "IsSetAsOutput": false,
+        "Excluded": false,
+        "ShowGeometry": true,
+        "X": 22.0,
+        "Y": 183.0
+      },
+      {
+        "Id": "c11bb81860b143cf917744d4386a0914",
+        "Name": "Python Script",
+        "IsSetAsInput": false,
+        "IsSetAsOutput": false,
+        "Excluded": false,
+        "ShowGeometry": true,
+        "X": 409.6796230629282,
+        "Y": 1030.4072804489829
+      },
+      {
+        "Id": "04b5a18e1439415a9700e9fb8323659e",
+        "Name": "Integer Slider",
+        "IsSetAsInput": false,
+        "IsSetAsOutput": false,
+        "Excluded": false,
+        "ShowGeometry": true,
+        "X": 130.36542802662507,
+        "Y": 812.8773432042456
+      },
+      {
+        "Id": "3b26bddfbb58495fb7dbb1a643d1337f",
+        "Name": "Watch",
+        "IsSetAsInput": false,
+        "IsSetAsOutput": false,
+        "Excluded": false,
+        "ShowGeometry": true,
+        "X": 697.2667036390853,
+        "Y": 1104.8978664393
+      },
+      {
+        "Id": "de609ab0560648658cba5b53cc5cf8ea",
+        "Name": "String",
+        "IsSetAsInput": false,
+        "IsSetAsOutput": false,
+        "Excluded": false,
+        "ShowGeometry": true,
+        "X": 83.21895724302374,
+        "Y": 1229.1022177932014
+      },
+      {
+        "Id": "a7495220bf524154aecdd132d96c111f",
+        "Name": "Number Slider",
+        "IsSetAsInput": false,
+        "IsSetAsOutput": false,
+        "Excluded": false,
+        "ShowGeometry": true,
+        "X": -21.857791934664988,
+        "Y": 1103.9043889857423
+      },
+      {
+        "Id": "8bbdfe899f72446b8117b3d9f1bf068e",
+        "Name": "List Create",
+        "IsSetAsInput": false,
+        "IsSetAsOutput": false,
+        "Excluded": false,
+        "ShowGeometry": true,
+        "X": 164.82111351931383,
+        "Y": 949.6427784908375
+      },
+      {
+        "Id": "3a4881efc84647f0af9a200f0e0157f2",
+        "Name": "String",
+        "IsSetAsInput": false,
+        "IsSetAsOutput": false,
+        "Excluded": false,
+        "ShowGeometry": true,
+        "X": -197.35831981654928,
+        "Y": 804.3238700536085
+      },
+      {
+        "Id": "7c91df9b20cf47359df49a2ca1bc6bf6",
+        "Name": "String",
+        "IsSetAsInput": false,
+        "IsSetAsOutput": false,
+        "Excluded": false,
+        "ShowGeometry": true,
+        "X": -197.35831981654906,
+        "Y": 948.5249407336283
+      },
+      {
+        "Id": "8c6dcdc4c86a43d4afbe229ae50dce1f",
+        "Name": "Watch",
+        "IsSetAsInput": false,
+        "IsSetAsOutput": false,
+        "Excluded": false,
+        "ShowGeometry": true,
+        "X": 1434.679628626428,
+        "Y": 854.5709662349545
+      },
+      {
+        "Id": "09a55b1adfc349189b95134f97658f0d",
+        "Name": "Code Block",
+        "IsSetAsInput": false,
+        "IsSetAsOutput": false,
+        "Excluded": false,
+        "ShowGeometry": true,
+        "X": 1065.0,
+        "Y": 808.0
+      }
+    ],
+    "Annotations": [],
+    "X": 178.37161644822743,
+    "Y": -437.27839393744,
+    "Zoom": 0.7992003028160853
+  }
+}

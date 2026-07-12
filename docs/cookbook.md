@@ -277,8 +277,8 @@ from Autodesk.Civil.ApplicationServices import CivilApplication
 REPO = r"C:\dev\civil3d-automations"
 if REPO not in sys.path:
     sys.path.insert(0, REPO)
-
-# --- force-reload the WHOLE package so nested helper edits are picked up ---
+    sys.path.append(f"{REPO}/Site-packages")
+    
 def unload_package(package_name):
     for name in list(sys.modules.keys()):
         if name == package_name or name.startswith(package_name + "."):
@@ -360,12 +360,10 @@ import traceback
 # from pathlib import Path
 # sys.path.append(str(Path(__file__).resolve().parent))
 
-# def unload_package(package_name):
-#     for name in list(sys.modules.keys()):
-#         if name == package_name or name.startswith(package_name + "."):
-#             del sys.modules[name]
+# from _helpers import unload_package
 # unload_package("_helpers")
-# from _helpers import _opt_str, _opt_int, _opt_float, normalize_name_list, _ensure_layer, cleanup, get_style_id_or_first, station_offset, point_location, endpoint_on_alignment
+# from _helpers import (
+# _opt_str, _opt_int, _opt_float, normalize_name_list, _ensure_layer, cleanup, get_style_id_or_first, build_unique_name, _pt_of, station_offset, point_location, endpoint_on_alignment, unload_package)
 
 # --- end imports ------------------------------------------------------------
 
@@ -384,6 +382,7 @@ def run(context):
     try:
         # ---------------------------------------------------------------
         # Your logic here, using tr.GetObject(...), etc.
+        pass
         # ---------------------------------------------------------------
 
     except Exception as e:

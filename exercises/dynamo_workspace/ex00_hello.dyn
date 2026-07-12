@@ -1,0 +1,378 @@
+{
+  "Uuid": "3f4402c9-e306-42c3-8b71-7122eb02d530",
+  "IsCustomNode": false,
+  "Description": "",
+  "Name": "ex00_hello",
+  "ElementResolver": {
+    "ResolutionMap": {}
+  },
+  "Inputs": [],
+  "Outputs": [
+    {
+      "Id": "0b4b2ebc57fa4af389974651867968fc",
+      "Name": "Watch",
+      "Type": "unknown",
+      "InitialValue": "",
+      "Description": "Visualizes a node's output"
+    },
+    {
+      "Id": "fdd495301b5e4735bdfdf57fdfe0342a",
+      "Name": "Watch",
+      "Type": "unknown",
+      "InitialValue": "",
+      "Description": "Visualizes a node's output"
+    }
+  ],
+  "Nodes": [
+    {
+      "ConcreteType": "Dynamo.Graph.Nodes.CodeBlockNodeModel, DynamoCore",
+      "Id": "1ab0bb01bf6a454698b121d83b50072e",
+      "NodeType": "CodeBlockNode",
+      "Inputs": [],
+      "Outputs": [
+        {
+          "Id": "ff9236776e8641b790e9f9906f2c5b22",
+          "Name": "",
+          "Description": "Value of expression at line 1",
+          "UsingDefaultValue": false,
+          "Level": 2,
+          "UseLevels": false,
+          "KeepListStructure": false
+        },
+        {
+          "Id": "a50ffdc348f84ac08d06b6d695d0c74f",
+          "Name": "",
+          "Description": "Value of expression at line 2",
+          "UsingDefaultValue": false,
+          "Level": 2,
+          "UseLevels": false,
+          "KeepListStructure": false
+        }
+      ],
+      "Replication": "Disabled",
+      "Description": "Allows for DesignScript code to be authored directly",
+      "Code": "\"Barane\";\n\"run 3\";"
+    },
+    {
+      "ConcreteType": "PythonNodeModels.PythonNode, PythonNodeModels",
+      "Code": "import sys, importlib\r\n\r\n# 1. put your repo on the path (edit to your clone location)\r\nREPO = r\"\\\\wsl.localhost\\Ubuntu-24.04\\home\\wsl\\work\\project\\dynamo-python-node-docs-v1\"\r\nif REPO not in sys.path:\r\n    sys.path.append(REPO)\r\n\r\n# 2. import and FORCE-RELOAD the module so file edits are picked up every run\r\nimport exercises.ex00_hello as mod\r\nimportlib.reload(mod)                 # <-- the magic that avoids copy-paste\r\n\r\n# 3. hand Dynamo's inputs to your function, return its result\r\nOUT = mod.run(IN)",
+      "Engine": "CPython3",
+      "VariableInputPorts": true,
+      "Id": "2c207faba07046e884efceda2e5c8ed2",
+      "NodeType": "PythonScriptNode",
+      "Inputs": [
+        {
+          "Id": "2bfd62402f394672b9f208a31497080c",
+          "Name": "IN[0]",
+          "Description": "Input #0",
+          "UsingDefaultValue": false,
+          "Level": 2,
+          "UseLevels": false,
+          "KeepListStructure": false
+        },
+        {
+          "Id": "ff8a18d1ade947cd98d81ea8c73c9f39",
+          "Name": "IN[1]",
+          "Description": "Input #1",
+          "UsingDefaultValue": false,
+          "Level": 2,
+          "UseLevels": false,
+          "KeepListStructure": false
+        }
+      ],
+      "Outputs": [
+        {
+          "Id": "379b685bc15043cb9f2696db7dfb4e29",
+          "Name": "OUT",
+          "Description": "Result of the python script",
+          "UsingDefaultValue": false,
+          "Level": 2,
+          "UseLevels": false,
+          "KeepListStructure": false
+        }
+      ],
+      "Replication": "Disabled",
+      "Description": "Runs an embedded Python script."
+    },
+    {
+      "ConcreteType": "CoreNodeModels.Watch, CoreNodeModels",
+      "WatchWidth": 265.0,
+      "WatchHeight": 200.0,
+      "Id": "0b4b2ebc57fa4af389974651867968fc",
+      "NodeType": "ExtensionNode",
+      "Inputs": [
+        {
+          "Id": "155fd8276ebc43c0bf53e5526d610868",
+          "Name": "",
+          "Description": "Node to show output from",
+          "UsingDefaultValue": false,
+          "Level": 2,
+          "UseLevels": false,
+          "KeepListStructure": false
+        }
+      ],
+      "Outputs": [
+        {
+          "Id": "6018c2b3e3244b1db1256b4d605a7f44",
+          "Name": "",
+          "Description": "Node output",
+          "UsingDefaultValue": false,
+          "Level": 2,
+          "UseLevels": false,
+          "KeepListStructure": false
+        }
+      ],
+      "Replication": "Disabled",
+      "Description": "Visualizes a node's output"
+    },
+    {
+      "ConcreteType": "Dynamo.Graph.Nodes.CodeBlockNodeModel, DynamoCore",
+      "Id": "52588b5ed94545288c9e76ce77b79750",
+      "NodeType": "CodeBlockNode",
+      "Inputs": [],
+      "Outputs": [
+        {
+          "Id": "31fa5f83875e4e499eef60a6cb708515",
+          "Name": "",
+          "Description": "Value of expression at line 1",
+          "UsingDefaultValue": false,
+          "Level": 2,
+          "UseLevels": false,
+          "KeepListStructure": false
+        },
+        {
+          "Id": "9bbdecb5b2d149579a3f7e03a2938325",
+          "Name": "",
+          "Description": "Value of expression at line 2",
+          "UsingDefaultValue": false,
+          "Level": 2,
+          "UseLevels": false,
+          "KeepListStructure": false
+        }
+      ],
+      "Replication": "Disabled",
+      "Description": "Allows for DesignScript code to be authored directly",
+      "Code": "\"Barane\";\n\"run 3\";"
+    },
+    {
+      "ConcreteType": "PythonNodeModels.PythonNode, PythonNodeModels",
+      "Code": "import sys, importlib\r\n\r\n# 1. put your repo on the path (edit to your clone location)\r\nREPO = r\"\\\\wsl.localhost\\Ubuntu-24.04\\home\\wsl\\work\\project\\dynamo-python-node-docs-v1\"\r\nif REPO not in sys.path:\r\n    sys.path.append(REPO)\r\n\r\n# 2. import and FORCE-RELOAD the module so file edits are picked up every run\r\nimport exercises.ex00_hello as mod\r\nimportlib.reload(mod)                 # <-- the magic that avoids copy-paste\r\n\r\n# 3. hand Dynamo's inputs to your function, return its result\r\nOUT = mod.run(IN)",
+      "Engine": "CPython3",
+      "VariableInputPorts": true,
+      "Id": "7329265bc01340769878bdfba8b3fe3e",
+      "NodeType": "PythonScriptNode",
+      "Inputs": [
+        {
+          "Id": "dba4d3c7766045eeaa818940110ee08e",
+          "Name": "IN[0]",
+          "Description": "Input #0",
+          "UsingDefaultValue": false,
+          "Level": 2,
+          "UseLevels": false,
+          "KeepListStructure": false
+        },
+        {
+          "Id": "363b050110ce4bc2957f480fde74cf67",
+          "Name": "IN[1]",
+          "Description": "Input #1",
+          "UsingDefaultValue": false,
+          "Level": 2,
+          "UseLevels": false,
+          "KeepListStructure": false
+        }
+      ],
+      "Outputs": [
+        {
+          "Id": "5ed98f8385ea491fb0e2cf94dfe9e0c9",
+          "Name": "OUT",
+          "Description": "Result of the python script",
+          "UsingDefaultValue": false,
+          "Level": 2,
+          "UseLevels": false,
+          "KeepListStructure": false
+        }
+      ],
+      "Replication": "Disabled",
+      "Description": "Runs an embedded Python script."
+    },
+    {
+      "ConcreteType": "CoreNodeModels.Watch, CoreNodeModels",
+      "WatchWidth": 265.0,
+      "WatchHeight": 200.0,
+      "Id": "fdd495301b5e4735bdfdf57fdfe0342a",
+      "NodeType": "ExtensionNode",
+      "Inputs": [
+        {
+          "Id": "07ecacf2cbb44db38e4c540cb7d92eba",
+          "Name": "",
+          "Description": "Node to show output from",
+          "UsingDefaultValue": false,
+          "Level": 2,
+          "UseLevels": false,
+          "KeepListStructure": false
+        }
+      ],
+      "Outputs": [
+        {
+          "Id": "2dc5b35b444d462a8aec50eb41a71590",
+          "Name": "",
+          "Description": "Node output",
+          "UsingDefaultValue": false,
+          "Level": 2,
+          "UseLevels": false,
+          "KeepListStructure": false
+        }
+      ],
+      "Replication": "Disabled",
+      "Description": "Visualizes a node's output"
+    }
+  ],
+  "Connectors": [
+    {
+      "Start": "ff9236776e8641b790e9f9906f2c5b22",
+      "End": "2bfd62402f394672b9f208a31497080c",
+      "Id": "f55c078d93c84533aa20e47c622c9971",
+      "IsHidden": "False"
+    },
+    {
+      "Start": "a50ffdc348f84ac08d06b6d695d0c74f",
+      "End": "ff8a18d1ade947cd98d81ea8c73c9f39",
+      "Id": "ddcc440d4c284552bfc466d29465762a",
+      "IsHidden": "False"
+    },
+    {
+      "Start": "379b685bc15043cb9f2696db7dfb4e29",
+      "End": "155fd8276ebc43c0bf53e5526d610868",
+      "Id": "7baeb20506074c508af4a12b4056e1fb",
+      "IsHidden": "False"
+    },
+    {
+      "Start": "31fa5f83875e4e499eef60a6cb708515",
+      "End": "dba4d3c7766045eeaa818940110ee08e",
+      "Id": "412a811b4c764ea8bac97a3fa86d2e1a",
+      "IsHidden": "False"
+    },
+    {
+      "Start": "9bbdecb5b2d149579a3f7e03a2938325",
+      "End": "363b050110ce4bc2957f480fde74cf67",
+      "Id": "7373355e95b84ab78e30e16446067f8c",
+      "IsHidden": "False"
+    },
+    {
+      "Start": "5ed98f8385ea491fb0e2cf94dfe9e0c9",
+      "End": "07ecacf2cbb44db38e4c540cb7d92eba",
+      "Id": "1abb674dc04a44ba9c66fdcdcaf2482a",
+      "IsHidden": "False"
+    }
+  ],
+  "Dependencies": [],
+  "NodeLibraryDependencies": [],
+  "EnableLegacyPolyCurveBehavior": true,
+  "Thumbnail": "",
+  "GraphDocumentationURL": null,
+  "ExtensionWorkspaceData": [
+    {
+      "ExtensionGuid": "28992e1d-abb9-417f-8b1b-05e053bee670",
+      "Name": "Properties",
+      "Version": "3.3",
+      "Data": {}
+    }
+  ],
+  "Author": "",
+  "Linting": {
+    "activeLinter": "None",
+    "activeLinterId": "7b75fb44-43fd-4631-a878-29f4d5d8399a",
+    "warningCount": 0,
+    "errorCount": 0
+  },
+  "Bindings": [],
+  "View": {
+    "Dynamo": {
+      "ScaleFactor": 1.0,
+      "HasRunWithoutCrash": true,
+      "IsVisibleInDynamoLibrary": true,
+      "Version": "3.3.1.7726",
+      "RunType": "Manual",
+      "RunPeriod": "1000"
+    },
+    "Camera": {
+      "Name": "_Background Preview",
+      "EyeX": -17.0,
+      "EyeY": 24.0,
+      "EyeZ": 50.0,
+      "LookX": 12.0,
+      "LookY": -13.0,
+      "LookZ": -58.0,
+      "UpX": 0.0,
+      "UpY": 1.0,
+      "UpZ": 0.0
+    },
+    "ConnectorPins": [],
+    "NodeViews": [
+      {
+        "Id": "1ab0bb01bf6a454698b121d83b50072e",
+        "Name": "Reload Token",
+        "IsSetAsInput": false,
+        "IsSetAsOutput": false,
+        "Excluded": false,
+        "ShowGeometry": true,
+        "X": -16.90064069410778,
+        "Y": 227.06662611206272
+      },
+      {
+        "Id": "2c207faba07046e884efceda2e5c8ed2",
+        "Name": "Python Script",
+        "IsSetAsInput": false,
+        "IsSetAsOutput": false,
+        "Excluded": false,
+        "ShowGeometry": true,
+        "X": 230.09935930589222,
+        "Y": 227.23912611206273
+      },
+      {
+        "Id": "0b4b2ebc57fa4af389974651867968fc",
+        "Name": "Watch",
+        "IsSetAsInput": false,
+        "IsSetAsOutput": true,
+        "Excluded": false,
+        "ShowGeometry": true,
+        "X": 492.2917235824532,
+        "Y": 230.1910350429225
+      },
+      {
+        "Id": "52588b5ed94545288c9e76ce77b79750",
+        "Name": "Reload Token",
+        "IsSetAsInput": false,
+        "IsSetAsOutput": false,
+        "Excluded": false,
+        "ShowGeometry": true,
+        "X": -16.90064069410778,
+        "Y": 1121.6910350429225
+      },
+      {
+        "Id": "7329265bc01340769878bdfba8b3fe3e",
+        "Name": "Python Script",
+        "IsSetAsInput": false,
+        "IsSetAsOutput": false,
+        "Excluded": false,
+        "ShowGeometry": true,
+        "X": 230.09935930589222,
+        "Y": 1121.8635350429224
+      },
+      {
+        "Id": "fdd495301b5e4735bdfdf57fdfe0342a",
+        "Name": "Watch",
+        "IsSetAsInput": false,
+        "IsSetAsOutput": true,
+        "Excluded": false,
+        "ShowGeometry": true,
+        "X": 492.2917235824532,
+        "Y": 1124.8154439737823
+      }
+    ],
+    "Annotations": [],
+    "X": 265.5363310884494,
+    "Y": -1484.816299202448,
+    "Zoom": 1.479958533576416
+  }
+}

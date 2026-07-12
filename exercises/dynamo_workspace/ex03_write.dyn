@@ -1,0 +1,297 @@
+{
+  "Uuid": "e3be82b4-296b-413c-a0c4-3b3f2f00e9e5",
+  "IsCustomNode": false,
+  "Description": "",
+  "Name": "ex03_write",
+  "ElementResolver": {
+    "ResolutionMap": {}
+  },
+  "Inputs": [],
+  "Outputs": [
+    {
+      "Id": "3cf2d16aab854816bd0fb266bf9ac511",
+      "Name": "Watch",
+      "Type": "unknown",
+      "InitialValue": "",
+      "Description": "Visualizes a node's output"
+    }
+  ],
+  "Nodes": [
+    {
+      "ConcreteType": "PythonNodeModels.PythonNode, PythonNodeModels",
+      "Code": "import sys, clr, importlib, traceback\r\n\r\nclr.AddReference(\"AcMgd\"); clr.AddReference(\"AcCoreMgd\"); clr.AddReference(\"AcDbMgd\")\r\nclr.AddReference(\"AecBaseMgd\"); clr.AddReference(\"AecPropDataMgd\"); clr.AddReference(\"AeccDbMgd\")\r\n\r\nfrom Autodesk.AutoCAD.ApplicationServices.Core import Application\r\nfrom Autodesk.Civil.ApplicationServices import CivilApplication\r\n\r\n# --- repo path (edit to your clone) ---\r\nREPO = r\"\\\\wsl.localhost\\Ubuntu-24.04\\home\\wsl\\work\\project\\dynamo-python-node-docs-v1\"\r\nif REPO not in sys.path:\r\n    sys.path.insert(0, REPO)\r\n\r\n# --- force-reload the WHOLE package so nested helper edits are picked up ---\r\ndef unload_package(package_name):\r\n    for name in list(sys.modules.keys()):\r\n        if name == package_name or name.startswith(package_name + \".\"):\r\n            del sys.modules[name]\r\n\r\n# --- active document context ---\r\ndoc    = Application.DocumentManager.MdiActiveDocument\r\ndb     = doc.Database\r\ned     = doc.Editor\r\ncivdoc = CivilApplication.ActiveDocument\r\n\r\nresults = {\"Success\": False, \"Warnings\": [], \"Errors\": [], \"Skipped\": [], \"Data\": None}\r\nRAISE_ON_ERROR = True\r\n\r\ntry:\r\n    importlib.invalidate_caches()\r\n    unload_package(\"exercises\")                                  # drop cached modules\r\n    mod = importlib.import_module(\"exercises.ex03_write\")\r\n\r\n    with doc.LockDocument():\r\n        with db.TransactionManager.StartTransaction() as tr:\r\n            context = {\"doc\": doc, \"db\": db, \"ed\": ed,\r\n                       \"civdoc\": civdoc, \"tr\": tr, \"IN\": IN}\r\n            results[\"Data\"] = mod.run(context)                     # module does the work\r\n            tr.Commit()\r\n\r\n    results[\"Success\"] = True\r\n    results[\"ModuleFile\"] = getattr(mod, \"__file__\", None)         # confirms which file ran\r\nexcept Exception as ex:\r\n    results[\"Errors\"].append(str(ex))\r\n    results[\"Traceback\"] = traceback.format_exc()\r\n    if RAISE_ON_ERROR:\r\n        raise\r\n\r\nOUT = results",
+      "Engine": "CPython3",
+      "VariableInputPorts": true,
+      "Id": "43c8e6076e7740b086809e86454901cd",
+      "NodeType": "PythonScriptNode",
+      "Inputs": [
+        {
+          "Id": "a51fffe42eea4fa08f73eb556c842d24",
+          "Name": "IN[0]",
+          "Description": "Input #0",
+          "UsingDefaultValue": false,
+          "Level": 2,
+          "UseLevels": false,
+          "KeepListStructure": false
+        }
+      ],
+      "Outputs": [
+        {
+          "Id": "2449edb987fe469d81cf1a841ce508c4",
+          "Name": "OUT",
+          "Description": "Result of the python script",
+          "UsingDefaultValue": false,
+          "Level": 2,
+          "UseLevels": false,
+          "KeepListStructure": false
+        }
+      ],
+      "Replication": "Disabled",
+      "Description": "Runs an embedded Python script."
+    },
+    {
+      "ConcreteType": "CoreNodeModels.Watch, CoreNodeModels",
+      "WatchWidth": 648.0,
+      "WatchHeight": 362.0,
+      "Id": "3cf2d16aab854816bd0fb266bf9ac511",
+      "NodeType": "ExtensionNode",
+      "Inputs": [
+        {
+          "Id": "60de11d5a6e04cb89a10afe64097c3b6",
+          "Name": "",
+          "Description": "Node to show output from",
+          "UsingDefaultValue": false,
+          "Level": 2,
+          "UseLevels": false,
+          "KeepListStructure": false
+        }
+      ],
+      "Outputs": [
+        {
+          "Id": "9a82629de8674607b7db2bf752ddc6f0",
+          "Name": "",
+          "Description": "Node output",
+          "UsingDefaultValue": false,
+          "Level": 2,
+          "UseLevels": false,
+          "KeepListStructure": false
+        }
+      ],
+      "Replication": "Disabled",
+      "Description": "Visualizes a node's output"
+    },
+    {
+      "ConcreteType": "CoreNodeModels.Input.IntegerSlider, CoreNodeModels",
+      "NumberType": "Integer",
+      "MaximumValue": 100,
+      "MinimumValue": 0,
+      "StepValue": 1,
+      "Id": "aca71ef9179347e6af7f2f97068a3528",
+      "NodeType": "NumberInputNode",
+      "Inputs": [],
+      "Outputs": [
+        {
+          "Id": "dc2bb050d26d42d5a8b1acf7e161e083",
+          "Name": "",
+          "Description": "Int64",
+          "UsingDefaultValue": false,
+          "Level": 2,
+          "UseLevels": false,
+          "KeepListStructure": false
+        }
+      ],
+      "Replication": "Disabled",
+      "Description": "Produces integer values",
+      "InputValue": 58
+    },
+    {
+      "ConcreteType": "PythonNodeModels.PythonNode, PythonNodeModels",
+      "Code": "import clr, traceback\r\n\r\nclr.AddReference(\"AcMgd\")\r\nclr.AddReference(\"AcCoreMgd\")\r\nclr.AddReference(\"AcDbMgd\")\r\nclr.AddReference(\"AecBaseMgd\")           # Autodesk.Aec base (property data, etc.)\r\nclr.AddReference(\"AecPropDataMgd\")\r\nclr.AddReference(\"AeccDbMgd\")            # Civil 3D database objects\r\n\r\nfrom Autodesk.AutoCAD.ApplicationServices.Core import Application\r\nfrom Autodesk.Civil.ApplicationServices import CivilApplication\r\nfrom Autodesk.AutoCAD.DatabaseServices import (\r\n     OpenMode, ObjectId, Polyline, SymbolUtilityServices, LayerTable, LayerTableRecord)\r\nfrom Autodesk.AutoCAD.Geometry import Point2d, Point3d\r\nfrom Autodesk.Civil.DatabaseServices import Alignment, PolylineOptions\r\nfrom Autodesk.AutoCAD.Colors import Color, ColorMethod\r\n\r\n# active document context\r\ndoc    = Application.DocumentManager.MdiActiveDocument\r\ndb     = doc.Database\r\ned     = doc.Editor\r\ncivdoc = CivilApplication.ActiveDocument\r\n\r\nresults = {\"Success\": False, \"Warnings\": [], \"Errors\": [], \"Skipped\": [], \"Data\": None}\r\nRAISE_ON_ERROR = False        # True while developing → Dynamo fails loudly\r\n\r\ndef _ensure_layer(tr, db, name):\r\n    lt = tr.GetObject(db.LayerTableId, OpenMode.ForRead)\r\n    if lt.Has(name): \r\n        return True\r\n    lt = tr.GetObject(db.LayerTableId, OpenMode.ForWrite)\r\n    rec = LayerTableRecord(); rec.Name = name\r\n    lid = lt.Add(rec); tr.AddNewlyCreatedDBObject(rec, True)\r\n    return lid\r\n\r\n\r\ntry:\r\n    with doc.LockDocument():             \r\n        with db.TransactionManager.StartTransaction() as tr:\r\n            _ensure_layer(tr, db, \"DEV-SCRATCH\")\r\n            ms = tr.GetObject(SymbolUtilityServices.GetBlockModelSpaceId(db), OpenMode.ForWrite)\r\n            pl = Polyline()\r\n            pl.AddVertexAt(0, Point2d(0.0, 0.0),  0.0, 0.0, 0.0)\r\n            pl.AddVertexAt(1, Point2d(50.0, 20.0), 0.0, 0.0, 0.0)\r\n            pl.Layer = \"DEV-SCRATCH\"\r\n            pid = ms.AppendEntity(pl)\r\n            tr.AddNewlyCreatedDBObject(pl, True)      \r\n            tr.Commit()\r\n            results[\"Data\"] = {\"Created\": str(pid)}                       \r\n            #results[\"Data\"] = \"Prathamesh\"\r\n    results[\"Success\"] = True\r\nexcept Exception as ex:\r\n    results[\"Errors\"].append(str(ex))\r\n    results[\"Traceback\"] = traceback.format_exc()\r\n    if RAISE_ON_ERROR:\r\n        raise\r\n\r\nOUT = results",
+      "Engine": "CPython3",
+      "VariableInputPorts": true,
+      "Id": "6387ba1717bf4881b45f1007c2544027",
+      "NodeType": "PythonScriptNode",
+      "Inputs": [
+        {
+          "Id": "cd7bdc61c7424e7689e7bce242d6c154",
+          "Name": "IN[0]",
+          "Description": "Input #0",
+          "UsingDefaultValue": false,
+          "Level": 2,
+          "UseLevels": false,
+          "KeepListStructure": false
+        }
+      ],
+      "Outputs": [
+        {
+          "Id": "d56ea93c72db4b0ea25fc223d62cc2d0",
+          "Name": "OUT",
+          "Description": "Result of the python script",
+          "UsingDefaultValue": false,
+          "Level": 2,
+          "UseLevels": false,
+          "KeepListStructure": false
+        }
+      ],
+      "Replication": "Disabled",
+      "Description": "Runs an embedded Python script."
+    },
+    {
+      "ConcreteType": "CoreNodeModels.Watch, CoreNodeModels",
+      "WatchWidth": 878.0,
+      "WatchHeight": 410.0,
+      "Id": "a75da80bfd3a4d16a00968107f95090b",
+      "NodeType": "ExtensionNode",
+      "Inputs": [
+        {
+          "Id": "0ea19fcd9cc649cbbaa4e7c3a71c224e",
+          "Name": "",
+          "Description": "Node to show output from",
+          "UsingDefaultValue": false,
+          "Level": 2,
+          "UseLevels": false,
+          "KeepListStructure": false
+        }
+      ],
+      "Outputs": [
+        {
+          "Id": "2f745c056cf74882863f61fb314ccc3b",
+          "Name": "",
+          "Description": "Node output",
+          "UsingDefaultValue": false,
+          "Level": 2,
+          "UseLevels": false,
+          "KeepListStructure": false
+        }
+      ],
+      "Replication": "Disabled",
+      "Description": "Visualizes a node's output"
+    }
+  ],
+  "Connectors": [
+    {
+      "Start": "2449edb987fe469d81cf1a841ce508c4",
+      "End": "60de11d5a6e04cb89a10afe64097c3b6",
+      "Id": "9495fd07daa04887a47acbd24527d871",
+      "IsHidden": "False"
+    },
+    {
+      "Start": "dc2bb050d26d42d5a8b1acf7e161e083",
+      "End": "a51fffe42eea4fa08f73eb556c842d24",
+      "Id": "20ff5d6f67de4a68ae0a43a02d68bfee",
+      "IsHidden": "False"
+    },
+    {
+      "Start": "dc2bb050d26d42d5a8b1acf7e161e083",
+      "End": "cd7bdc61c7424e7689e7bce242d6c154",
+      "Id": "e19b4cbeedc74da7893350e0de89c6cd",
+      "IsHidden": "False"
+    },
+    {
+      "Start": "d56ea93c72db4b0ea25fc223d62cc2d0",
+      "End": "0ea19fcd9cc649cbbaa4e7c3a71c224e",
+      "Id": "c764970dfb0140f5bb7eab8e1bdda20e",
+      "IsHidden": "False"
+    }
+  ],
+  "Dependencies": [],
+  "NodeLibraryDependencies": [],
+  "EnableLegacyPolyCurveBehavior": true,
+  "Thumbnail": "",
+  "GraphDocumentationURL": null,
+  "ExtensionWorkspaceData": [
+    {
+      "ExtensionGuid": "28992e1d-abb9-417f-8b1b-05e053bee670",
+      "Name": "Properties",
+      "Version": "3.3",
+      "Data": {}
+    }
+  ],
+  "Author": "",
+  "Linting": {
+    "activeLinter": "None",
+    "activeLinterId": "7b75fb44-43fd-4631-a878-29f4d5d8399a",
+    "warningCount": 0,
+    "errorCount": 0
+  },
+  "Bindings": [],
+  "View": {
+    "Dynamo": {
+      "ScaleFactor": 1.0,
+      "HasRunWithoutCrash": true,
+      "IsVisibleInDynamoLibrary": true,
+      "Version": "3.3.1.7726",
+      "RunType": "Manual",
+      "RunPeriod": "1000"
+    },
+    "Camera": {
+      "Name": "_Background Preview",
+      "EyeX": -17.0,
+      "EyeY": 24.0,
+      "EyeZ": 50.0,
+      "LookX": 12.0,
+      "LookY": -13.0,
+      "LookZ": -58.0,
+      "UpX": 0.0,
+      "UpY": 1.0,
+      "UpZ": 0.0
+    },
+    "ConnectorPins": [],
+    "NodeViews": [
+      {
+        "Id": "43c8e6076e7740b086809e86454901cd",
+        "Name": "Python Script",
+        "IsSetAsInput": false,
+        "IsSetAsOutput": false,
+        "Excluded": false,
+        "ShowGeometry": true,
+        "X": 529.8426758101355,
+        "Y": 194.6115231577991
+      },
+      {
+        "Id": "3cf2d16aab854816bd0fb266bf9ac511",
+        "Name": "Watch",
+        "IsSetAsInput": false,
+        "IsSetAsOutput": true,
+        "Excluded": false,
+        "ShowGeometry": true,
+        "X": 763.3147988860053,
+        "Y": 193.65099952474793
+      },
+      {
+        "Id": "aca71ef9179347e6af7f2f97068a3528",
+        "Name": "Run Token",
+        "IsSetAsInput": false,
+        "IsSetAsOutput": false,
+        "Excluded": false,
+        "ShowGeometry": true,
+        "X": 101.2545723903902,
+        "Y": 865.6971570964221
+      },
+      {
+        "Id": "6387ba1717bf4881b45f1007c2544027",
+        "Name": "Python Script",
+        "IsSetAsInput": false,
+        "IsSetAsOutput": false,
+        "Excluded": true,
+        "ShowGeometry": true,
+        "X": 557.0954892420136,
+        "Y": 900.6816826378837
+      },
+      {
+        "Id": "a75da80bfd3a4d16a00968107f95090b",
+        "Name": "Watch",
+        "IsSetAsInput": false,
+        "IsSetAsOutput": false,
+        "Excluded": false,
+        "ShowGeometry": true,
+        "X": 766.1402729438485,
+        "Y": 899.161895459396
+      }
+    ],
+    "Annotations": [],
+    "X": 283.3830959745317,
+    "Y": 45.36350622515653,
+    "Zoom": 0.4438090489693593
+  }
+}
