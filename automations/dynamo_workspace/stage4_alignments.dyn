@@ -152,7 +152,7 @@
       ],
       "Replication": "Disabled",
       "Description": "Produces integer values",
-      "InputValue": 53
+      "InputValue": 12
     },
     {
       "ConcreteType": "Dynamo.Graph.Nodes.CodeBlockNodeModel, DynamoCore",
@@ -1088,8 +1088,8 @@
         "Background": "#FFC1D676"
       }
     ],
-    "X": 620.2290660351695,
-    "Y": -602.0898430568483,
-    "Zoom": 0.8404152845370638
+    "X": 603.1308507786247,
+    "Y": -929.6718543061015,
+    "Zoom": 1.0459501603904553
   }
 }

@@ -67,16 +67,13 @@ def find_surface_id(tr, civdoc, surface_name):
 def build_unique_name(existing_set, base):
     """A name not already in existing_set; append ' 1', ' 2', ... if taken.
     Records the chosen name in existing_set to prevent reuse within a run."""
-    print(f"Prathamesh existing_set: {existing_set}")
-    print(f"Prathamesh base: {base}")
     if base not in existing_set:
         existing_set.add(base)
         return base
     i = 1
     while True:
-        cand = f"{base} (v{i})"
+        cand = f"{base} ({i})"
         if cand not in existing_set:
             existing_set.add(cand)
-            print(f"Prathamesh cand: {cand}")
             return cand
         i += 1

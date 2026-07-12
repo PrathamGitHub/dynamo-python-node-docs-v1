@@ -39,21 +39,11 @@ def run(context):
         # --- the MAIN pipes to profile, straight from DuckDB (option A) ---
         main_pipes = con.execute("""
             SELECT handle, name, start_x, start_y, end_x, end_y
-            FROM pipes WHERE role = 'main' ORDER BY name
+            FROM pipes WHERE role = 'main' ORDER BY name limit 6
         """).fetchall()
 
-        alignment_names = set()
-        # Get alignment names from the Civil Document. 
-        # Uncomment only if you need to get all the alignment names.
-        # It takes too long to get all the alignment names.
-        # We are using the main pipe name to create a unique alignment name.
-
-        # alignment_ids = civdoc.GetAlignmentIds()
-        # for align_id in alignment_ids:
-        #     # Open each alignment object for reading
-        #     alignment_obj = tr.GetObject(align_id, OpenMode.ForRead)
-        #     # Extract and store the name
-        #     alignment_names.add(alignment_obj.Name)
+        alignment_names = set(getattr(tr.GetObject(a, OpenMode.ForRead), "Name", "")
+                    for a in civdoc.GetAlignmentIds())
         for handle, pname, sx, sy, ex, ey in main_pipes:
             try:
                 aln_name = core.build_unique_name(alignment_names, f"ALN - {pname or handle}")
