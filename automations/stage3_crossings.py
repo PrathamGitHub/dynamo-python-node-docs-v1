@@ -60,6 +60,8 @@ def run(context):
         data["Crossings"] = con.execute("""
             SELECT main_name, cross_name, cross_net, cross_kind,
                    verdict, angle_class, runs_alongside,
+                   round(cross_x, 3) AS cross_x, round(cross_y, 3) AS cross_y,
+                   round(main_z, 3) AS main_z, round(cross_z, 3) AS cross_z,
                    round(dz, 3) AS dz, round(angle_deg, 1) AS deg
             FROM crossings
             ORDER BY runs_alongside, verdict, dz
