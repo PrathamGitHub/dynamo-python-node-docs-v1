@@ -1,4 +1,5 @@
-from Autodesk.AutoCAD.DatabaseServices import ObjectId
+from Autodesk.AutoCAD.DatabaseServices import ObjectId, SymbolUtilityServices, OpenMode
+from Autodesk.AutoCAD.Runtime import RXClass
 from Autodesk.AutoCAD.Geometry import Point3d
 from Autodesk.Civil.DatabaseServices import ProfileView
 from Autodesk.Civil import BandType
@@ -99,3 +100,15 @@ def set_band_inputs(pv, datasource_id, surface_profile_id, warnings):
                 getattr(pv.Bands, set_)(items)      # write-back is REQUIRED
         except Exception:
             pass
+
+
+def find_profile_view_id_by_name(tr, db, name):
+    """ObjectId of the ProfileView called `name`, or None. Enumerates ModelSpace
+    ProfileView entities by RXClass (the reliable CPython3 way — see Stage 5)."""
+    ms = tr.GetObject(SymbolUtilityServices.GetBlockModelSpaceId(db), OpenMode.ForRead)
+    pv_class = RXClass.GetClass(ProfileView)
+    for oid in ms:
+        if oid.ObjectClass.IsDerivedFrom(pv_class):
+            if getattr(tr.GetObject(oid, OpenMode.ForRead), "Name", "") == name:
+                return oid
+    return None

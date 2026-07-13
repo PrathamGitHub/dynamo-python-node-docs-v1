@@ -1,8 +1,8 @@
 {
-  "Uuid": "3103006f-4e65-4518-bb6b-755d633400a5",
+  "Uuid": "8e419dd4-b641-4880-83ad-0f6ee95abe5e",
   "IsCustomNode": false,
   "Description": "",
-  "Name": "stage5_profile_view",
+  "Name": "stage6_add_parts",
   "ElementResolver": {
     "ResolutionMap": {}
   },
@@ -11,7 +11,7 @@
   "Nodes": [
     {
       "ConcreteType": "PythonNodeModels.PythonNode, PythonNodeModels",
-      "Code": "import sys, clr, importlib, traceback\r\n\r\nclr.AddReference(\"AcMgd\"); clr.AddReference(\"AcCoreMgd\"); clr.AddReference(\"AcDbMgd\")\r\nclr.AddReference(\"AecBaseMgd\"); clr.AddReference(\"AecPropDataMgd\"); clr.AddReference(\"AeccDbMgd\")\r\n \r\nfrom Autodesk.AutoCAD.ApplicationServices.Core import Application\r\nfrom Autodesk.Civil.ApplicationServices import CivilApplication\r\n\r\n# --- repo path (edit to your clone) ---\r\nREPO = r\"\\\\wsl.localhost\\Ubuntu-24.04\\home\\wsl\\work\\project\\dynamo-python-node-docs-v1\"\r\nif REPO not in sys.path:\r\n    sys.path.insert(0, REPO)\r\n    sys.path.append(f\"{REPO}/Site-packages\")\r\n\r\ndef unload_package(package_name):\r\n    for name in list(sys.modules.keys()):\r\n        if name == package_name or name.startswith(package_name + \".\"):\r\n            del sys.modules[name]\r\n\r\n# --- active document context ---\r\ndoc    = Application.DocumentManager.MdiActiveDocument\r\ndb     = doc.Database\r\ned     = doc.Editor\r\ncivdoc = CivilApplication.ActiveDocument\r\n\r\nresults = {\"Success\": False, \"Warnings\": [], \"Errors\": [], \"Skipped\": [], \"Data\": None}\r\nRAISE_ON_ERROR = False\r\n\r\ntry:\r\n    importlib.invalidate_caches()\r\n    unload_package(\"automations\")                                  # drop cached modules\r\n    mod = importlib.import_module(\"automations.stage5_profile_views\")\r\n\r\n    with doc.LockDocument():\r\n        with db.TransactionManager.StartTransaction() as tr:\r\n            context = {\"doc\": doc, \"db\": db, \"ed\": ed,\r\n                       \"civdoc\": civdoc, \"tr\": tr, \"IN\": IN}\r\n            results[\"Data\"] = mod.run(context)                     # module does the work\r\n            tr.Commit()\r\n\r\n    results[\"Success\"] = True\r\n    results[\"ModuleFile\"] = getattr(mod, \"__file__\", None)         # confirms which file ran\r\nexcept Exception as ex:\r\n    results[\"Errors\"].append(str(ex))\r\n    results[\"Traceback\"] = traceback.format_exc()\r\n    if RAISE_ON_ERROR:\r\n        raise\r\n\r\nOUT = results",
+      "Code": "import sys, clr, importlib, traceback\r\n\r\nclr.AddReference(\"AcMgd\"); clr.AddReference(\"AcCoreMgd\"); clr.AddReference(\"AcDbMgd\")\r\nclr.AddReference(\"AecBaseMgd\"); clr.AddReference(\"AecPropDataMgd\"); clr.AddReference(\"AeccDbMgd\")\r\n \r\nfrom Autodesk.AutoCAD.ApplicationServices.Core import Application\r\nfrom Autodesk.Civil.ApplicationServices import CivilApplication\r\n\r\n# --- repo path (edit to your clone) ---\r\nREPO = r\"\\\\wsl.localhost\\Ubuntu-24.04\\home\\wsl\\work\\project\\dynamo-python-node-docs-v1\"\r\nif REPO not in sys.path:\r\n    sys.path.insert(0, REPO)\r\n    sys.path.append(f\"{REPO}/Site-packages\")\r\n\r\ndef unload_package(package_name):\r\n    for name in list(sys.modules.keys()):\r\n        if name == package_name or name.startswith(package_name + \".\"):\r\n            del sys.modules[name]\r\n\r\n# --- active document context ---\r\ndoc    = Application.DocumentManager.MdiActiveDocument\r\ndb     = doc.Database\r\ned     = doc.Editor\r\ncivdoc = CivilApplication.ActiveDocument\r\n\r\nresults = {\"Success\": False, \"Warnings\": [], \"Errors\": [], \"Skipped\": [], \"Data\": None}\r\nRAISE_ON_ERROR = False\r\n\r\ntry:\r\n    importlib.invalidate_caches()\r\n    unload_package(\"automations\")                                  # drop cached modules\r\n    mod = importlib.import_module(\"automations.stage6_add_parts\")\r\n\r\n    with doc.LockDocument():\r\n        with db.TransactionManager.StartTransaction() as tr:\r\n            context = {\"doc\": doc, \"db\": db, \"ed\": ed,\r\n                       \"civdoc\": civdoc, \"tr\": tr, \"IN\": IN}\r\n            results[\"Data\"] = mod.run(context)                     # module does the work\r\n            tr.Commit()\r\n\r\n    results[\"Success\"] = True\r\n    results[\"ModuleFile\"] = getattr(mod, \"__file__\", None)         # confirms which file ran\r\nexcept Exception as ex:\r\n    results[\"Errors\"].append(str(ex))\r\n    results[\"Traceback\"] = traceback.format_exc()\r\n    if RAISE_ON_ERROR:\r\n        raise\r\n\r\nOUT = results",
       "Engine": "CPython3",
       "VariableInputPorts": true,
       "Id": "5c4ddc1d4fcf4046921f08ddc1ef89b6",
@@ -30,24 +30,6 @@
           "Id": "a2a23322b62640888b89fc89b3d6dab4",
           "Name": "IN[1]",
           "Description": "Input #1",
-          "UsingDefaultValue": false,
-          "Level": 2,
-          "UseLevels": false,
-          "KeepListStructure": false
-        },
-        {
-          "Id": "81c8510d33b14f4eb2c7be719bb6b6d5",
-          "Name": "IN[2]",
-          "Description": "Input #2",
-          "UsingDefaultValue": false,
-          "Level": 2,
-          "UseLevels": false,
-          "KeepListStructure": false
-        },
-        {
-          "Id": "d543ed54be4a466992716830c02e8f59",
-          "Name": "IN[3]",
-          "Description": "Input #3",
           "UsingDefaultValue": false,
           "Level": 2,
           "UseLevels": false,
@@ -161,7 +143,7 @@
       ],
       "Replication": "Disabled",
       "Description": "Produces integer values",
-      "InputValue": 17
+      "InputValue": 30
     },
     {
       "ConcreteType": "Dynamo.Graph.Nodes.CodeBlockNodeModel, DynamoCore",
@@ -672,21 +654,15 @@
       "IsHidden": "False"
     },
     {
-      "Start": "857b61392e7042c7af9c9fb8a075a62c",
-      "End": "81c8510d33b14f4eb2c7be719bb6b6d5",
-      "Id": "500502e1d0674edd8558eb89574538fe",
-      "IsHidden": "False"
-    },
-    {
       "Start": "71d0ddbc204a458885d77bea5e1539fc",
-      "End": "a2a23322b62640888b89fc89b3d6dab4",
-      "Id": "f8afd78cb8564bc8b374df10cbcbf01c",
+      "End": "4c4224be6b2f47e9b16f166000096ced",
+      "Id": "e46c4c2e68a843489f31040a15ef0172",
       "IsHidden": "False"
     },
     {
       "Start": "65407700138144fcaaecd5857615a4f7",
-      "End": "d543ed54be4a466992716830c02e8f59",
-      "Id": "2a33d3a5197142868acb2680b4a9bebc",
+      "End": "a2a23322b62640888b89fc89b3d6dab4",
+      "Id": "98e0bcd7910d47b18640926dd162860e",
       "IsHidden": "False"
     },
     {
@@ -778,16 +754,18 @@
       "End": "7d40bf9437a948b4bd1faa478e446f56",
       "Id": "4561a2cf5252489283c70910466f829e",
       "IsHidden": "False"
-    },
-    {
-      "Start": "44e35454809046388c7ca3b3556f98cf",
-      "End": "4c4224be6b2f47e9b16f166000096ced",
-      "Id": "352a90c9807a43f1a9d052209a838107",
-      "IsHidden": "False"
     }
   ],
   "Dependencies": [],
-  "NodeLibraryDependencies": [],
+  "NodeLibraryDependencies": [
+    {
+      "Name": "stage3_crossings.ddb",
+      "ReferenceType": "External",
+      "Nodes": [
+        "c30637d2c14c4fd7945cffb57a972f37"
+      ]
+    }
+  ],
   "EnableLegacyPolyCurveBehavior": true,
   "Thumbnail": "",
   "GraphDocumentationURL": null,
@@ -837,8 +815,8 @@
         "IsSetAsOutput": false,
         "Excluded": false,
         "ShowGeometry": true,
-        "X": -171.14247668105418,
-        "Y": 968.5169264850518
+        "X": -169.77811881879563,
+        "Y": 967.1525686227934
       },
       {
         "Id": "3b84291c62a344028e265b8be85ecf84",
@@ -847,8 +825,8 @@
         "IsSetAsOutput": false,
         "Excluded": false,
         "ShowGeometry": true,
-        "X": 28.926356164449885,
-        "Y": 969.319602773455
+        "X": 30.29071402670843,
+        "Y": 967.9552449111966
       },
       {
         "Id": "ba4eafb2a5aa4035847eef703bed4511",
@@ -857,8 +835,8 @@
         "IsSetAsOutput": false,
         "Excluded": false,
         "ShowGeometry": true,
-        "X": -470.94725030236066,
-        "Y": 1192.3630748727044
+        "X": -469.5828924401021,
+        "Y": 1190.998717010446
       },
       {
         "Id": "c30637d2c14c4fd7945cffb57a972f37",
@@ -867,8 +845,8 @@
         "IsSetAsOutput": false,
         "Excluded": false,
         "ShowGeometry": true,
-        "X": -503.6938223954638,
-        "Y": 960.3489097144077
+        "X": -502.3294645332053,
+        "Y": 958.9845518521493
       },
       {
         "Id": "044026bd6b034dbda43dbd4a7ce89091",
@@ -877,8 +855,8 @@
         "IsSetAsOutput": false,
         "Excluded": false,
         "ShowGeometry": true,
-        "X": -568.1424766810542,
-        "Y": 1349.516926485052
+        "X": -566.7781188187956,
+        "Y": 1348.1525686227935
       },
       {
         "Id": "f6787fc06e6243d698c4a7e5620bfc38",
@@ -1027,8 +1005,8 @@
         "IsSetAsOutput": false,
         "Excluded": false,
         "ShowGeometry": true,
-        "X": -450.1243644320034,
-        "Y": 837.5137152062576
+        "X": -448.76000656974486,
+        "Y": 836.1493573439992
       }
     ],
     "Annotations": [
@@ -1048,13 +1026,13 @@
           "b36d7acefb6a4af9a9700cc04c4f923b"
         ],
         "HasNestedGroups": false,
-        "Left": -578.1424766810542,
-        "Top": 764.5137152062576,
+        "Left": -576.7781188187956,
+        "Top": 763.1493573439992,
         "Width": 1838.068832845504,
         "Height": 842.8058875671974,
         "FontSize": 36.0,
         "GroupStyleId": "00000000-0000-0000-0000-000000000000",
-        "InitialTop": 837.5137152062576,
+        "InitialTop": 836.1493573439992,
         "InitialHeight": 657.0032112787943,
         "TextblockHeight": 63.0,
         "Background": "#FFC1D676"
@@ -1095,8 +1073,8 @@
         "Background": "#FFC1D676"
       }
     ],
-    "X": 592.4010194406598,
-    "Y": -423.3875330036699,
-    "Zoom": 0.7329455325925935
+    "X": 654.841023757459,
+    "Y": -520.0080238307796,
+    "Zoom": 0.7736638385155018
   }
 }

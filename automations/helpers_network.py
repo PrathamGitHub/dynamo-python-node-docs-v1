@@ -1,6 +1,6 @@
 """Extract gravity + pressure networks into flat primitive rows.
 Uses the OPEN transaction from context — never opens its own."""
-from Autodesk.AutoCAD.DatabaseServices import OpenMode
+from Autodesk.AutoCAD.DatabaseServices import SymbolUtilityServices, Handle, OpenMode
 from automations.helpers_geometry import try_get_point3d, pt_xyz, wkt_line, wkt_point
 
 
@@ -21,12 +21,15 @@ def get_member(obj, name, cast=None, default=None, missing=None):
     return val
 
 
+# -----------------------------------------------------------------------------
+# Get Pipe End Structure Handles/Ids
+
+search_pairs = (("StartStructureId", "EndStructureId"),
+                 ("StartStructure", "EndStructure"))
 def get_pipe_end_structure_handles(tr, pipe_obj, missing=None):
     """(start_handle, end_handle) for a Pipe. Probes BOTH the direct
     *StructureId properties AND the older *Structure.ObjectId form for
     cross-version robustness. Returns (None, None) on failure."""
-    search_pairs = (("StartStructureId", "EndStructureId"),
-                 ("StartStructure", "EndStructure"))
     for a, b in search_pairs:
         if hasattr(pipe_obj, a) and hasattr(pipe_obj, b):
             try:
@@ -53,6 +56,24 @@ def _handle_of(tr, oid):
     except Exception:
         pass
     return None
+
+
+def get_pipe_end_structure_ids(pipe_obj):
+    """(start_structure_id, end_structure_id) for a Pipe OBJECT (not an id).
+    Verbatim from v2: tries the direct *Id properties, then the older object-
+    reference properties that expose an .ObjectId. Returns (None, None) on failure.
+    NOTE: takes the opened pipe object, so callers pass tr.GetObject(pid, ...)."""
+    for a, b in search_pairs:
+        if hasattr(pipe_obj, a) and hasattr(pipe_obj, b):
+            try:
+                sv, ev = getattr(pipe_obj, a), getattr(pipe_obj, b)
+                if hasattr(sv, "ObjectId"): sv = sv.ObjectId
+                if hasattr(ev, "ObjectId"): ev = ev.ObjectId
+                return sv, ev
+            except Exception:
+                pass
+    return None, None
+
 
 #------------------------------------------------------------------------------
 # Extractor drivers for gravity networks
@@ -148,3 +169,128 @@ def extract_pressure_pipes(tr, pnet, network_name, missing, skipped):
         except Exception as e:
             skipped.append({"pressure_pipe": str(pid), "reason": str(e)})
     return rows
+
+# -----------------------------------------------------------------------------
+# Add Parts
+
+def scan_pvparts_from_modelspace(tr, db, missing_oids, pvpart_class, warnings):
+    """Recover ProfileViewPart ids by scanning ModelSpace for entities of
+    pvpart_class whose ModelPartId matches one of missing_oids.
+    Returns {model_part_oid: pvpart_oid}. Used only when AddToProfileView
+    returned void/None for those parts."""
+    found = {}
+    if not missing_oids or pvpart_class is None:
+        return found
+    target = {str(o): o for o in missing_oids}      # compare by string form
+    try:
+        ms = tr.GetObject(SymbolUtilityServices.GetBlockModelSpaceId(db), OpenMode.ForRead)
+        for eid in ms:
+            try:
+                obj = tr.GetObject(eid, OpenMode.ForRead)
+                if isinstance(obj, pvpart_class):
+                    key = str(obj.ModelPartId)
+                    if key in target:
+                        found[target[key]] = eid
+            except Exception:
+                pass
+    except Exception as e:
+        warnings.append(f"ProfileViewPart fallback scan error: {e}")
+    return found
+
+
+def add_parts_to_profile_view(tr, db, ids_to_add, pv_id,
+                              pvpart_class, has_pvpart, warnings):
+    """Add gravity parts (Pipe/Structure) to a PV. Returns {model_oid: pvpart_oid}.
+    Fast path: trust AddToProfileView's return. Fallback: ModelSpace scan for
+    any part that returned void."""
+    pvpart_map = {}
+    for oid in ids_to_add:
+        try:
+            part = tr.GetObject(oid, OpenMode.ForWrite)
+            if hasattr(part, "AddToProfileView"):
+                result = part.AddToProfileView(pv_id)
+                try:
+                    if result is not None and not result.IsNull:
+                        pvpart_map[oid] = result
+                except Exception:
+                    pass                              # void return -> fallback later
+        except Exception as e:
+            warnings.append(f"AddToProfileView failed for {oid}: {e}")
+
+    missing = [o for o in ids_to_add if o not in pvpart_map]
+    if missing and has_pvpart:
+        recovered = scan_pvparts_from_modelspace(tr, db, missing, pvpart_class, warnings)
+        if recovered:
+            pvpart_map.update(recovered)
+            warnings.append(f"{len(recovered)} gravity ProfileViewPart id(s) "
+                            f"recovered via ModelSpace scan.")
+    return pvpart_map
+
+
+def add_pressure_pipes_to_profile_view(tr, db, pressure_pipe_ids, pv_id,
+                                       pvpressurepart_class, has_pvpressurepart, warnings):
+    """Same contract for pressure pipes -> ProfileViewPressurePart. The returned
+    pvpart id is required by CrossingPressurePipeProfileLabel.Create (Stage 7)."""
+    pvpart_map = {}
+    for oid in pressure_pipe_ids:
+        try:
+            ppart = tr.GetObject(oid, OpenMode.ForWrite)
+            if hasattr(ppart, "AddToProfileView"):
+                result = ppart.AddToProfileView(pv_id)
+                try:
+                    if result is not None and not result.IsNull:
+                        pvpart_map[oid] = result
+                except Exception:
+                    pass
+        except Exception as e:
+            warnings.append(f"Pressure AddToProfileView failed for {oid}: {e}")
+
+    missing = [o for o in pressure_pipe_ids if o not in pvpart_map]
+    if missing and has_pvpressurepart:
+        recovered = scan_pvparts_from_modelspace(tr, db, missing, pvpressurepart_class, warnings)
+        if recovered:
+            pvpart_map.update(recovered)
+            warnings.append(f"{len(recovered)} pressure ProfileViewPart id(s) "
+                            f"recovered via ModelSpace scan.")
+    return pvpart_map
+
+
+def build_handle_index(db, tr, civdoc, has_pressure, pressure_ext, warnings):
+    """Map every gravity (and, if available, pressure) pipe/structure HANDLE to
+    its live ObjectId for this session. DuckDB stores handles (portable, stable);
+    the drawing needs ObjectIds (session-bound). Returns {handle_str: ObjectId}.
+
+    Uses Database.GetObjectId(add=False, Handle, reserved=0) — the direct, correct
+    inverse of `oid.Handle.ToString()` used by extraction. A handle that no longer
+    resolves (part deleted since extraction) is simply skipped, not fatal."""
+    index = {}
+
+    def add_net(net_id):
+        net = tr.GetObject(net_id, OpenMode.ForRead)
+        for oid in list(net.GetPipeIds()) + list(net.GetStructureIds()):
+            try:
+                index[tr.GetObject(oid, OpenMode.ForRead).Handle.ToString()] = oid
+            except Exception:
+                pass
+
+    for gid in civdoc.GetPipeNetworkIds():
+        try:
+            add_net(gid)
+        except Exception as e:
+            warnings.append(f"handle-index gravity net skipped: {e}")
+
+    if has_pressure and pressure_ext is not None:
+        try:
+            for pid in pressure_ext.GetPressurePipeNetworkIds(civdoc):
+                pnet = tr.GetObject(pid, OpenMode.ForRead)
+                for oid in pnet.GetPipeIds():
+                    try:
+                        index[tr.GetObject(oid, OpenMode.ForRead).Handle.ToString()] = oid
+                    except Exception:
+                        pass
+        except Exception as e:
+            warnings.append(f"handle-index pressure nets skipped: {e}")
+
+    return index
+
+
