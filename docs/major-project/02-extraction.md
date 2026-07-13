@@ -223,6 +223,10 @@ def _handle_of(tr, oid):
 ### The extraction driver
 
 ```python
+# automations/helpers_network.py
+#------------------------------------------------------------------------------
+# Extractor drivers for gravity networks
+
 def extract_pipes(tr, net, network_name, role, missing, skipped):
     """Flatten every pipe in `net` into rows. `role` tags the scope group."""
     rows, conns = [], []
@@ -305,7 +309,9 @@ _STRUCT_COLS = [
     ("handle","TEXT"),("name","TEXT"),("part_type","TEXT"),("network","TEXT"),
     ("x","DOUBLE"),("y","DOUBLE"),("rim_z","DOUBLE"),("sump_z","DOUBLE"),("wkt","TEXT"),
 ]
-
+_CONN_COLS = [
+    ("pipe_handle","TEXT"),("structure_handle","TEXT"), ("end_type","TEXT"),
+]
 
 def connect(db_path=None):
     con = duckdb.connect(db_path if db_path else ":memory:")   # file=EDA, None=ETL
@@ -338,9 +344,10 @@ def create_and_insert(con, table, cols, rows):
         con.unregister("_ins")
 
 
-def load_networks(con, pipes, structures):
+def load_networks(con, pipes, structures, connections):
     create_and_insert(con, "pipes_raw", _PIPE_COLS, pipes)
     create_and_insert(con, "structures_raw", _STRUCT_COLS, structures)
+    create_and_insert(con, "connections", _CONN_COLS, connections)
     # build geometry columns once, straight off the raw tables
     con.execute("CREATE OR REPLACE TABLE pipes AS "
                 "SELECT *, ST_GeomFromText(wkt) AS geom FROM pipes_raw WHERE wkt IS NOT NULL;")

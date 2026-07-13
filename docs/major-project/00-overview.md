@@ -61,21 +61,13 @@ also — by the author's own account and ours — **produce inconsistent, inaccu
 crossing results**. That is not a tuning problem; it is an architectural one, and
 naming it precisely is the whole point of this section.
 
-!!! danger "The reference's core flaw: an alignment is not a straight line"
-    The reference tests crossings by intersecting each pipe against the
-    alignment's **start point → end point** — a single straight segment:
-    ```python
-    # reference: treats the whole alignment as ONE segment aln_sp -> aln_ep
-    if not segments_intersect_2d(aln_sp.X, aln_sp.Y, aln_ep.X, aln_ep.Y,
-                                 sp.X, sp.Y, ep.X, ep.Y):
-        return False
-    ```
-    Real alignments **bend** — tangents, curves, PIs. A pipe that crosses the
-    alignment near a curve is **missed** (false negative); a pipe near the
-    straight-line chord but not the real path is **falsely reported** (false
-    positive). Every downstream label inherits the error. This single assumption
-    is the root cause of the "inconsistent results," and no amount of tolerance
-    tuning fixes a wrong model.
+!!! danger "The reference's core flaw: iterating over the whole crossing network per IC"
+    The reference iterates over the whole crossing network per IC. This is inefficient and prone to errors.
+    It also does not handle the case where the same alignment is used for multiple IC's. 
+    This is a major flaw and it is the root cause of the "inconsistent results" problem.
+    The angle of intersection is not considered, so glancing/near-parallel "crossings" are not detected.
+    The z at the crossing is not resolved, so clash vs. clearance is not classified.
+    This is a major flaw and it is the root cause of the "inconsistent results" problem.
 
 !!! success "Our fix, previewed"
     We test each pipe against **every segment of the alignment's real polyline**,

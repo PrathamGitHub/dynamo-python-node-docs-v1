@@ -244,12 +244,12 @@ def run(context):
     data = {"Warnings": [], "Skipped": [], "Items": []}
     missing = set()
     try:
-        main_network = IN[0] if (len(IN) > 0 and IN[0]) else None
-        surface_name = IN[2] if (len(IN) > 2 and IN[2]) else None
-
+        surface_name = IN[0] if (len(IN) > 0 and IN[0]) else None
+        duckdb_path = IN[1] if (len(IN) > 1 and IN[1]) else None
+        
         # --- DuckDB connection from the pipeline (carried under a DISTINCT key,
         # NOT context["db"] which is the AutoCAD Database). See note below. ---
-        con = context["duck"]            # the DuckDB connection built in Stage 2/3
+        con = duck.connect(duckdb_path)                       # None = in-memory ETL
 
         # --- resolve ONCE ---
         ms = tr.GetObject(db.CurrentSpaceId, OpenMode.ForWrite)
@@ -269,13 +269,14 @@ def run(context):
         # --- the MAIN pipes to profile, straight from DuckDB (option A) ---
         main_pipes = con.execute("""
             SELECT handle, name, start_x, start_y, end_x, end_y
-            FROM pipes WHERE role = 'main' ORDER BY name
+            FROM pipes WHERE role = 'main' ORDER BY name limit 6
         """).fetchall()
 
-        names = set()
+        alignment_names = set(getattr(tr.GetObject(a, OpenMode.ForRead), "Name", "")
+                    for a in civdoc.GetAlignmentIds())
         for handle, pname, sx, sy, ex, ey in main_pipes:
             try:
-                aln_name = core.build_unique_name(names, f"ALN - {pname or handle}")
+                aln_name = core.build_unique_name(alignment_names, f"ALN - {pname or handle}")
                 aln_id = al.create_alignment_from_points(
                     civdoc, tr, ms, (sx, sy), (ex, ey), aln_name,
                     layer_id, aln_style_id, aln_labelset_id)   # site defaults to Null
