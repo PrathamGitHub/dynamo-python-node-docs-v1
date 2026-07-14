@@ -20,18 +20,23 @@ def run(context):
         surface_name  = IN[0] if (len(IN) > 0 and IN[0]) else None
         duckdb_path   = IN[1] if (len(IN) > 1 and IN[1]) else None
         band_net_name = IN[2] if (len(IN) > 2 and IN[2]) else None
-        con = duck.connect(duckdb_path)              # reconnect; no live con from stage 3/4
+        aln_style_name = IN[3] if (len(IN) > 3 and IN[3]) else None
+        aln_labelset_name = IN[4] if (len(IN) > 4 and IN[4]) else None
+        prof_style_name = IN[5] if (len(IN) > 5 and IN[5]) else None
+        prof_labelset_name = IN[6] if (len(IN) > 6 and IN[6]) else None
+        pv_style_name = IN[7] if (len(IN) > 7 and IN[7]) else None
+        bandset_name = IN[8] if (len(IN) > 8 and IN[8]) else None
 
-        ms = tr.GetObject(db.CurrentSpaceId, OpenMode.ForWrite)
+        con = duck.connect(duckdb_path)              # reconnect; no live con from stage 3/4
 
         # --- resolve ONCE ---
         layer_id = core.ensure_layer(tr, db, TEMP_LAYER)
-        aln_style_id, _    = core.get_style_id(civdoc.Styles.AlignmentStyles, None, data["Warnings"], "Alignment Style")
-        aln_labelset_id, _ = core.get_style_id(civdoc.Styles.LabelSetStyles.AlignmentLabelSetStyles, None, data["Warnings"], "Alignment Label Set")
-        prof_style_id, _   = core.get_style_id(civdoc.Styles.ProfileStyles, None, data["Warnings"], "Profile Style")
-        prof_lblset_id, _  = core.get_style_id(civdoc.Styles.LabelSetStyles.ProfileLabelSetStyles, None, data["Warnings"], "Profile Label Set")
-        pv_style_id, _     = core.get_style_id(civdoc.Styles.ProfileViewStyles, None, data["Warnings"], "Profile View Style")
-        bandset_id, _      = core.get_style_id(civdoc.Styles.ProfileViewBandSetStyles, None, data["Warnings"], "Profile View Band Set")
+        aln_style_id, _    = core.get_style_id(civdoc.Styles.AlignmentStyles, aln_style_name, data["Warnings"], "Alignment Style")
+        aln_labelset_id, _ = core.get_style_id(civdoc.Styles.LabelSetStyles.AlignmentLabelSetStyles, aln_labelset_name, data["Warnings"], "Alignment Label Set")
+        prof_style_id, _   = core.get_style_id(civdoc.Styles.ProfileStyles, prof_style_name, data["Warnings"], "Profile Style")
+        prof_lblset_id, _  = core.get_style_id(civdoc.Styles.LabelSetStyles.ProfileLabelSetStyles, prof_labelset_name, data["Warnings"], "Profile Label Set")
+        pv_style_id, _     = core.get_style_id(civdoc.Styles.ProfileViewStyles, pv_style_name, data["Warnings"], "Profile View Style")
+        bandset_id, _      = core.get_style_id(civdoc.Styles.ProfileViewBandSetStyles, bandset_name, data["Warnings"], "Profile View Band Set")
         surface_id = core.find_surface_id(tr, civdoc, surface_name)
 
         # band data source (a pipe network id, by name; optional)
@@ -56,7 +61,7 @@ def run(context):
         # existing profile view names -> avoid duplicate-name errors
         # 1. Fetch all object IDs in Model Space
         ms_id = SymbolUtilityServices.GetBlockModelSpaceId(db)
-        ms = tr.GetObject(ms_id, OpenMode.ForRead)
+        ms = tr.GetObject(ms_id, OpenMode.ForWrite)
         # 2. Filter for ProfileView IDs using a single-line list comprehension
         pv_class = RXClass.GetClass(ProfileView)
         profile_view_ids = set(obj_id for obj_id in ms if obj_id.ObjectClass.IsDerivedFrom(pv_class))
