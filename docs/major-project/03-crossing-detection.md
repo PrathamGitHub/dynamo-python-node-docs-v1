@@ -242,7 +242,7 @@ WITH cand AS (
           ON cm.structure_handle = co.structure_handle
         WHERE cm.pipe_handle = m.handle AND co.pipe_handle = o.handle)
 ),
-xy AS (SELECT *, ST_X(ipt) AS cross_x, ST_Y(ipt) AS cross_y FROM cand),
+xy AS (SELECT *, ST_X(ipt) AS cross_x, ST_Y(ipt) AS cross_y, ipt AS geom FROM cand),
 interp AS (                                        -- z on each pipe by 2D distance ratio
   SELECT *,
     CASE WHEN sqrt((mx2-mx1)*(mx2-mx1)+(my2-my1)*(my2-my1))=0 THEN 0
@@ -279,7 +279,9 @@ SELECT main_handle, main_name, main_net, main_dia,
          AND to_ > {edge} AND to_ < 1-{edge}) AS runs_alongside,
        CASE WHEN abs(main_z - cross_z) - (main_dia + cross_dia)/2.0 <= 0 THEN 'CLASH'
             WHEN abs(main_z - cross_z) - (main_dia + cross_dia)/2.0 <  {clear} THEN 'TIGHT'
-            ELSE 'CLEAR' END AS verdict
+            ELSE 'CLEAR' END AS verdict,
+       -- geom column for the intersection point
+       geom
 FROM geo
 ORDER BY verdict, dz
 """

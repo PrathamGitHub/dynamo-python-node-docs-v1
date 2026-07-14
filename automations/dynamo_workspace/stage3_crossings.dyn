@@ -11,7 +11,7 @@
   "Nodes": [
     {
       "ConcreteType": "PythonNodeModels.PythonNode, PythonNodeModels",
-      "Code": "import sys, clr, importlib, traceback\r\n\r\nclr.AddReference(\"AcMgd\"); clr.AddReference(\"AcCoreMgd\"); clr.AddReference(\"AcDbMgd\")\r\nclr.AddReference(\"AecBaseMgd\"); clr.AddReference(\"AecPropDataMgd\"); clr.AddReference(\"AeccDbMgd\")\r\n \r\nfrom Autodesk.AutoCAD.ApplicationServices.Core import Application\r\nfrom Autodesk.Civil.ApplicationServices import CivilApplication\r\n\r\n# --- repo path (edit to your clone) ---\r\nREPO = r\"\\\\wsl.localhost\\Ubuntu-24.04\\home\\wsl\\work\\project\\dynamo-python-node-docs-v1\"\r\nif REPO not in sys.path:\r\n    sys.path.insert(0, REPO)\r\n    sys.path.append(f\"{REPO}/Site-packages\")\r\n\r\ndef unload_package(package_name):\r\n    for name in list(sys.modules.keys()):\r\n        if name == package_name or name.startswith(package_name + \".\"):\r\n            del sys.modules[name]\r\n\r\n# --- active document context ---\r\ndoc    = Application.DocumentManager.MdiActiveDocument\r\ndb     = doc.Database\r\ned     = doc.Editor\r\ncivdoc = CivilApplication.ActiveDocument\r\n\r\nresults = {\"Success\": False, \"Warnings\": [], \"Errors\": [], \"Skipped\": [], \"Data\": None}\r\nRAISE_ON_ERROR = False\r\n\r\ntry:\r\n    importlib.invalidate_caches()\r\n    unload_package(\"automations\")                                  # drop cached modules\r\n    mod = importlib.import_module(\"automations.stage3_crossings\")\r\n\r\n    with doc.LockDocument():\r\n        with db.TransactionManager.StartTransaction() as tr:\r\n            context = {\"doc\": doc, \"db\": db, \"ed\": ed,\r\n                       \"civdoc\": civdoc, \"tr\": tr, \"IN\": IN}\r\n            results[\"Data\"] = mod.run(context)                     # module does the work\r\n            tr.Commit()\r\n\r\n    results[\"Success\"] = True\r\n    results[\"ModuleFile\"] = getattr(mod, \"__file__\", None)         # confirms which file ran\r\nexcept Exception as ex:\r\n    results[\"Errors\"].append(str(ex))\r\n    results[\"Traceback\"] = traceback.format_exc()\r\n    if RAISE_ON_ERROR:\r\n        raise\r\n\r\nOUT = results",
+      "Code": "import sys, clr, importlib, traceback\r\n\r\nclr.AddReference(\"AcMgd\"); clr.AddReference(\"AcCoreMgd\"); clr.AddReference(\"AcDbMgd\")\r\nclr.AddReference(\"AecBaseMgd\"); clr.AddReference(\"AecPropDataMgd\"); clr.AddReference(\"AeccDbMgd\")\r\n \r\nfrom Autodesk.AutoCAD.ApplicationServices.Core import Application\r\nfrom Autodesk.Civil.ApplicationServices import CivilApplication\r\n\r\n# --- repo path (edit to your clone) ---\r\nREPO = r\"\\\\wsl.localhost\\Ubuntu-24.04\\home\\wsl\\work\\project\\dynamo-python-node-docs-v1\"\r\nif REPO not in sys.path:\r\n    sys.path.insert(0, REPO)\r\nif f\"{REPO}/Site-packages\" not in sys.path:\r\n    sys.path.append(f\"{REPO}/Site-packages\")\r\n\r\ndef unload_package(package_name):\r\n    for name in list(sys.modules.keys()):\r\n        if name == package_name or name.startswith(package_name + \".\"):\r\n            del sys.modules[name]\r\n\r\n# --- active document context ---\r\ndoc    = Application.DocumentManager.MdiActiveDocument\r\ndb     = doc.Database\r\ned     = doc.Editor\r\ncivdoc = CivilApplication.ActiveDocument\r\n\r\nresults = {\"Success\": False, \"Warnings\": [], \"Errors\": [], \"Skipped\": [], \"Data\": None}\r\nRAISE_ON_ERROR = False\r\n\r\ntry:\r\n    importlib.invalidate_caches()\r\n    unload_package(\"automations\")                                  # drop cached modules\r\n    mod = importlib.import_module(\"automations.stage3_crossings\")\r\n\r\n    with doc.LockDocument():\r\n        with db.TransactionManager.StartTransaction() as tr:\r\n            context = {\"doc\": doc, \"db\": db, \"ed\": ed,\r\n                       \"civdoc\": civdoc, \"tr\": tr, \"IN\": IN}\r\n            results[\"Data\"] = mod.run(context)                     # module does the work\r\n            tr.Commit()\r\n\r\n    results[\"Success\"] = True\r\n    results[\"ModuleFile\"] = getattr(mod, \"__file__\", None)         # confirms which file ran\r\nexcept Exception as ex:\r\n    results[\"Errors\"].append(str(ex))\r\n    results[\"Traceback\"] = traceback.format_exc()\r\n    if RAISE_ON_ERROR:\r\n        raise\r\n\r\nOUT = results",
       "Engine": "CPython3",
       "VariableInputPorts": true,
       "Id": "5c4ddc1d4fcf4046921f08ddc1ef89b6",
@@ -152,7 +152,7 @@
       ],
       "Replication": "Disabled",
       "Description": "Produces integer values",
-      "InputValue": 24
+      "InputValue": 14
     },
     {
       "ConcreteType": "Dynamo.Graph.Nodes.CodeBlockNodeModel, DynamoCore",
@@ -758,7 +758,15 @@
     }
   ],
   "Dependencies": [],
-  "NodeLibraryDependencies": [],
+  "NodeLibraryDependencies": [
+    {
+      "Name": "stage3_crossings.ddb",
+      "ReferenceType": "External",
+      "Nodes": [
+        "c30637d2c14c4fd7945cffb57a972f37"
+      ]
+    }
+  ],
   "EnableLegacyPolyCurveBehavior": true,
   "Thumbnail": "",
   "GraphDocumentationURL": null,
@@ -777,7 +785,20 @@
     "warningCount": 0,
     "errorCount": 0
   },
-  "Bindings": [],
+  "Bindings": [
+    {
+      "NodeId": "0ea3cb2c-b8aa-4b4b-a072-76e70a930208",
+      "Binding": {
+        "ByGeometry_InClassDecl-1_InFunctionScope-1_Instance0_0ea3cb2c-b8aa-4b4b-a072-76e70a930208": "H4sIAAAAAAAACouuVkpJLElUslJycjGxcFWqjQUAMdBBnxIAAAA="
+      }
+    },
+    {
+      "NodeId": "bc1ebb8a-da98-4fc4-8bec-b02334426e5b",
+      "Binding": {
+        "ByGeometry_InClassDecl-1_InFunctionScope-1_Instance0_bc1ebb8a-da98-4fc4-8bec-b02334426e5b": "H4sIAAAAAAAACouuVkpJLElUslJycjGxcFOqjQUA33/0jRIAAAA="
+      }
+    }
+  ],
   "View": {
     "Dynamo": {
       "ScaleFactor": 10000.0,
@@ -1055,8 +1076,8 @@
         "Background": "#FFC1D676"
       }
     ],
-    "X": 289.8407681489313,
-    "Y": -77.56443987230148,
-    "Zoom": 0.3190110739557624
+    "X": 473.7410771199677,
+    "Y": -343.1531263926869,
+    "Zoom": 0.6412420255311954
   }
 }
