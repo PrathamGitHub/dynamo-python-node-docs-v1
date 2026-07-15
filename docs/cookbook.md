@@ -277,6 +277,7 @@ from Autodesk.Civil.ApplicationServices import CivilApplication
 REPO = r"C:\dev\civil3d-automations"
 if REPO not in sys.path:
     sys.path.insert(0, REPO)
+if f"{REPO}/Site-packages" not in sys.path:
     sys.path.append(f"{REPO}/Site-packages")
     
 def unload_package(package_name):
