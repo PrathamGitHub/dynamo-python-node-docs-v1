@@ -105,10 +105,12 @@ def set_band_inputs(pv, datasource_id, surface_profile_id, warnings):
 def find_profile_view_id_by_name(tr, db, name):
     """ObjectId of the ProfileView called `name`, or None. Enumerates ModelSpace
     ProfileView entities by RXClass (the reliable CPython3 way — see Stage 5)."""
-    ms = tr.GetObject(SymbolUtilityServices.GetBlockModelSpaceId(db), OpenMode.ForRead)
+    ms_id = SymbolUtilityServices.GetBlockModelSpaceId(db)
+    ms = tr.GetObject(ms_id, OpenMode.ForRead)
     pv_class = RXClass.GetClass(ProfileView)
-    for oid in ms:
-        if oid.ObjectClass.IsDerivedFrom(pv_class):
-            if getattr(tr.GetObject(oid, OpenMode.ForRead), "Name", "") == name:
-                return oid
+    profile_view_ids = set(obj_id for obj_id in ms if obj_id.ObjectClass.IsDerivedFrom(pv_class))
+    for pv_id in profile_view_ids:
+        if getattr(tr.GetObject(pv_id, OpenMode.ForRead), "Name", "") == name:
+            return pv_id
+
     return None

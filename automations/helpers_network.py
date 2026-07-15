@@ -21,6 +21,14 @@ def get_member(obj, name, cast=None, default=None, missing=None):
     return val
 
 
+def find_alignment_id_by_name(tr, civdoc, name):
+    """ObjectId of the alignment called `name`, or None. Walks GetAlignmentIds()."""
+    for aid in civdoc.GetAlignmentIds():
+        if getattr(tr.GetObject(aid, OpenMode.ForRead), "Name", "") == name:
+            return aid
+    return None
+
+
 # -----------------------------------------------------------------------------
 # Get Pipe End Structure Handles/Ids
 
@@ -255,6 +263,124 @@ def add_pressure_pipes_to_profile_view(tr, db, pressure_pipe_ids, pv_id,
     return pvpart_map
 
 
+def probe_styles_root(civdoc, warnings):
+    """One-time diagnostic (kept for NEW builds, not the resolution strategy).
+    Dumps (a) StylesRoot collection names, and (b) the public members/type of the
+    PipeStyles collection, so on an unfamiliar build you can see how it exposes
+    styles. On THIS build (2025.2.5) the answers are already known — PipeStyles uses
+    get_Item, and pressure styles are absent from civdoc.Styles entirely (see the
+    'PV-part styles' section). Everything goes to `warnings` for Dynamo output."""
+    names = [n for n in dir(civdoc.Styles) if not n.startswith("_")]
+    style_cols = [n for n in names if "Style" in n]
+    warnings.append(f"StylesRoot members with 'Style': {style_cols}")
+    try:
+        coll = civdoc.Styles.PipeStyles
+        members = [n for n in dir(coll) if not n.startswith("_")]
+        warnings.append(f"PipeStyles type: {type(coll).__name__}")
+        warnings.append(f"PipeStyles members: {members}")
+        # count is the one property the Developer Guide guarantees; probe it
+        for cn in ("Count", "count"):
+            if hasattr(coll, cn):
+                warnings.append(f"PipeStyles.{cn} = {getattr(coll, cn)}")
+    except Exception as e:
+        warnings.append(f"probe_styles_root: PipeStyles introspection failed: {e}")
+    return style_cols
+
+
+def resolve_part_styles(civdoc, grav_name, warnings):
+    """Resolve the GRAVITY part style that governs profile-view display.
+    The pipe/structure network style IS the profile-view display style; there is
+    no separate ProfileViewPart style collection. PRESSURE is intentionally NOT
+    handled here — pressure styles are unreachable by name on this build (no
+    collection, not in civdoc.Styles, write-only .Name); use
+    pressure_style_from_sample instead. Returns a gravity style ObjectId or None
+    (-> set_pvpart_styles no-ops).
+
+    Access pattern is VERIFIED for Civil 3D 2025.2.5: PipeStyleCollection is not
+    Python-indexable (coll[0]/coll[name] -> 'unindexable object'); use Contains +
+    get_Item(name) for by-name and get_Item(0) for the default."""
+    coll = getattr(civdoc.Styles, "PipeStyles", None)
+    if coll is None:
+        warnings.append("resolve_part_styles: PipeStyles collection absent; gravity style left unset.")
+        return None
+    try:
+        if grav_name and coll.Contains(grav_name):
+            return coll.get_Item(grav_name)     # by-name (NOT coll[grav_name])
+        return coll.get_Item(0)                  # first/default (NOT coll[0])
+    except Exception as e:
+        warnings.append(f"resolve_part_styles: gravity style resolution failed: {e}")
+        return None
+
+
+def pressure_style_from_sample(tr, civdoc, get_pressure_ids, warnings, pipe_name=None):
+    """Return a pressure-pipe StyleId to apply to crossing pressure PV parts.
+
+    On Civil 3D 2025 (this build) pressure styles are NOT reachable by name:
+      - civdoc.Styles has no PressurePipeStyles collection;
+      - the target style isn't in any civdoc.Styles.* collection;
+      - PressurePipeStyle.Name is WRITE-ONLY (cannot match by name).
+    So we borrow a live StyleId via PressurePipe.get_StyleId() — which works even
+    though `pipe.StyleId` is write-only for assignment. Optionally match a specific
+    pipe by name to copy that pipe's style; otherwise use the first pressure pipe.
+    Returns an ObjectId (never None if any pressure pipe exists) or None."""
+    try:
+        for nid in get_pressure_ids(civdoc):
+            pnet = tr.GetObject(nid, OpenMode.ForRead)
+            for pid in pnet.GetPipeIds():
+                p = tr.GetObject(pid, OpenMode.ForRead)
+                if pipe_name is not None:
+                    try:
+                        if getattr(p, "Name", None) != pipe_name:
+                            continue
+                    except Exception:
+                        continue
+                sid = p.get_StyleId()           # readable; direct '=' assignment is not
+                if sid is not None and not sid.IsNull:
+                    return sid
+    except Exception as e:
+        warnings.append(f"pressure_style_from_sample failed: {e}")
+    return None
+
+
+def pvpart_addition_stats(ids_to_add, pvpart_map):
+    """Diagnostic — quantify the add hand-off for ONE add_* call.
+    Returns {requested, returned, missing, missing_ids} where:
+      requested   = ids we asked AddToProfileView to draw
+      returned    = pvparts we ended up with (fast-path + ModelSpace fallback)
+      missing     = requested that produced NO pvpart at all -> unlabelable
+      missing_ids = the actual model oids that fell through (for drill-down)
+    A non-empty `missing` is the Stage-7 label bug's fingerprint, surfaced here.
+    Note: this counts final coverage; it does NOT distinguish fast-path from
+    fallback (the add_* functions already warn on fallback recovery)."""
+    req = list(ids_to_add)
+    got = set(pvpart_map.keys())
+    missing_ids = [o for o in req if o not in got]
+    return {"requested": len(req), "returned": len(pvpart_map),
+            "missing": len(missing_ids), "missing_ids": missing_ids}
+
+
+def set_pvpart_styles(tr, pvpart_map, style_id, warnings):
+    """Apply the display style for parts drawn in a profile view.
+    pvpart_map: {model_oid: pvpart_oid} as returned by add_*_to_profile_view.
+    style_id: ObjectId of the target network part style; None/Null -> no-op.
+    The profile-view display of a pipe/structure follows its NETWORK part style,
+    so we set StyleId on the MODEL part (model_oid), not the pvpart. Called once
+    for gravity parts, once for pressure parts, after add."""
+    if style_id is None:
+        return
+    try:
+        if style_id.IsNull:
+            return
+    except Exception:
+        return
+    for model_oid, pvpart_oid in pvpart_map.items():
+        try:
+            part = tr.GetObject(model_oid, OpenMode.ForWrite)   # the pipe/structure
+            part.StyleId = style_id
+        except Exception as e:
+            warnings.append(f"set_pvpart_styles: could not set style on {model_oid}: {e}")
+
+
 def build_handle_index(db, tr, civdoc, has_pressure, pressure_ext, warnings):
     """Map every gravity (and, if available, pressure) pipe/structure HANDLE to
     its live ObjectId for this session. DuckDB stores handles (portable, stable);
@@ -292,5 +418,4 @@ def build_handle_index(db, tr, civdoc, has_pressure, pressure_ext, warnings):
             warnings.append(f"handle-index pressure nets skipped: {e}")
 
     return index
-
 

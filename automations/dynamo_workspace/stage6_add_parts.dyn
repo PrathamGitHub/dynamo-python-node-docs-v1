@@ -11,7 +11,7 @@
   "Nodes": [
     {
       "ConcreteType": "PythonNodeModels.PythonNode, PythonNodeModels",
-      "Code": "import sys, clr, importlib, traceback\r\n\r\nclr.AddReference(\"AcMgd\"); clr.AddReference(\"AcCoreMgd\"); clr.AddReference(\"AcDbMgd\")\r\nclr.AddReference(\"AecBaseMgd\"); clr.AddReference(\"AecPropDataMgd\"); clr.AddReference(\"AeccDbMgd\")\r\n \r\nfrom Autodesk.AutoCAD.ApplicationServices.Core import Application\r\nfrom Autodesk.Civil.ApplicationServices import CivilApplication\r\n\r\n# --- repo path (edit to your clone) ---\r\nREPO = r\"\\\\wsl.localhost\\Ubuntu-24.04\\home\\wsl\\work\\project\\dynamo-python-node-docs-v1\"\r\nif REPO not in sys.path:\r\n    sys.path.insert(0, REPO)\r\n    sys.path.append(f\"{REPO}/Site-packages\")\r\n\r\ndef unload_package(package_name):\r\n    for name in list(sys.modules.keys()):\r\n        if name == package_name or name.startswith(package_name + \".\"):\r\n            del sys.modules[name]\r\n\r\n# --- active document context ---\r\ndoc    = Application.DocumentManager.MdiActiveDocument\r\ndb     = doc.Database\r\ned     = doc.Editor\r\ncivdoc = CivilApplication.ActiveDocument\r\n\r\nresults = {\"Success\": False, \"Warnings\": [], \"Errors\": [], \"Skipped\": [], \"Data\": None}\r\nRAISE_ON_ERROR = False\r\n\r\ntry:\r\n    importlib.invalidate_caches()\r\n    unload_package(\"automations\")                                  # drop cached modules\r\n    mod = importlib.import_module(\"automations.stage6_add_parts\")\r\n\r\n    with doc.LockDocument():\r\n        with db.TransactionManager.StartTransaction() as tr:\r\n            context = {\"doc\": doc, \"db\": db, \"ed\": ed,\r\n                       \"civdoc\": civdoc, \"tr\": tr, \"IN\": IN}\r\n            results[\"Data\"] = mod.run(context)                     # module does the work\r\n            tr.Commit()\r\n\r\n    results[\"Success\"] = True\r\n    results[\"ModuleFile\"] = getattr(mod, \"__file__\", None)         # confirms which file ran\r\nexcept Exception as ex:\r\n    results[\"Errors\"].append(str(ex))\r\n    results[\"Traceback\"] = traceback.format_exc()\r\n    if RAISE_ON_ERROR:\r\n        raise\r\n\r\nOUT = results",
+      "Code": "import sys, clr, importlib, traceback\r\n\r\nclr.AddReference(\"AcMgd\"); clr.AddReference(\"AcCoreMgd\"); clr.AddReference(\"AcDbMgd\")\r\nclr.AddReference(\"AecBaseMgd\"); clr.AddReference(\"AecPropDataMgd\"); clr.AddReference(\"AeccDbMgd\")\r\n \r\nfrom Autodesk.AutoCAD.ApplicationServices.Core import Application\r\nfrom Autodesk.Civil.ApplicationServices import CivilApplication\r\n\r\n# --- repo path (edit to your clone) ---\r\nREPO = r\"\\\\wsl.localhost\\Ubuntu-24.04\\home\\wsl\\work\\project\\dynamo-python-node-docs-v1\"\r\nif REPO not in sys.path:\r\n    sys.path.insert(0, REPO)\r\nif f\"{REPO}/Site-packages\" not in sys.path:\r\n    sys.path.append(f\"{REPO}/Site-packages\")\r\n\r\ndef unload_package(package_name):\r\n    for name in list(sys.modules.keys()):\r\n        if name == package_name or name.startswith(package_name + \".\"):\r\n            del sys.modules[name]\r\n\r\n# --- active document context ---\r\ndoc    = Application.DocumentManager.MdiActiveDocument\r\ndb     = doc.Database\r\ned     = doc.Editor\r\ncivdoc = CivilApplication.ActiveDocument\r\n\r\nresults = {\"Success\": False, \"Warnings\": [], \"Errors\": [], \"Skipped\": [], \"Data\": None}\r\nRAISE_ON_ERROR = False\r\n\r\ntry:\r\n    importlib.invalidate_caches()\r\n    unload_package(\"automations\")                                  # drop cached modules\r\n    mod = importlib.import_module(\"automations.stage6_add_parts\")\r\n\r\n    with doc.LockDocument():\r\n        with db.TransactionManager.StartTransaction() as tr:\r\n            context = {\"doc\": doc, \"db\": db, \"ed\": ed,\r\n                       \"civdoc\": civdoc, \"tr\": tr, \"IN\": IN}\r\n            results[\"Data\"] = mod.run(context)                     # module does the work\r\n            tr.Commit()\r\n\r\n    results[\"Success\"] = True\r\n    results[\"ModuleFile\"] = getattr(mod, \"__file__\", None)         # confirms which file ran\r\nexcept Exception as ex:\r\n    results[\"Errors\"].append(str(ex))\r\n    results[\"Traceback\"] = traceback.format_exc()\r\n    if RAISE_ON_ERROR:\r\n        raise\r\n\r\nOUT = results",
       "Engine": "CPython3",
       "VariableInputPorts": true,
       "Id": "5c4ddc1d4fcf4046921f08ddc1ef89b6",
@@ -30,6 +30,24 @@
           "Id": "a2a23322b62640888b89fc89b3d6dab4",
           "Name": "IN[1]",
           "Description": "Input #1",
+          "UsingDefaultValue": false,
+          "Level": 2,
+          "UseLevels": false,
+          "KeepListStructure": false
+        },
+        {
+          "Id": "17b9c26f4ddb4162a48dd482ec187534",
+          "Name": "IN[2]",
+          "Description": "Input #2",
+          "UsingDefaultValue": false,
+          "Level": 2,
+          "UseLevels": false,
+          "KeepListStructure": false
+        },
+        {
+          "Id": "1631f91872e142df9b49d0624ea609e5",
+          "Name": "IN[3]",
+          "Description": "Input #3",
           "UsingDefaultValue": false,
           "Level": 2,
           "UseLevels": false,
@@ -99,7 +117,7 @@
       ],
       "Replication": "Disabled",
       "Description": "Creates a string",
-      "InputValue": "YCC- WASTEWATER NETWORK"
+      "InputValue": "Pipe Crossing Pipe (Storm)"
     },
     {
       "ConcreteType": "CoreNodeModels.Input.StringInput, CoreNodeModels",
@@ -143,7 +161,7 @@
       ],
       "Replication": "Disabled",
       "Description": "Produces integer values",
-      "InputValue": 30
+      "InputValue": 32
     },
     {
       "ConcreteType": "Dynamo.Graph.Nodes.CodeBlockNodeModel, DynamoCore",
@@ -644,6 +662,89 @@
       "Replication": "Disabled",
       "Description": "Creates a string",
       "InputValue": "Combined Paste"
+    },
+    {
+      "ConcreteType": "CoreNodeModels.Input.StringInput, CoreNodeModels",
+      "Id": "12304313f68f423db39a445f0f3dd9c0",
+      "NodeType": "StringInputNode",
+      "Inputs": [],
+      "Outputs": [
+        {
+          "Id": "eb221dc8cf4d4913ac2c2b722ab9d03a",
+          "Name": "",
+          "Description": "String",
+          "UsingDefaultValue": false,
+          "Level": 2,
+          "UseLevels": false,
+          "KeepListStructure": false
+        }
+      ],
+      "Replication": "Disabled",
+      "Description": "Creates a string",
+      "InputValue": "ME_Pressure Network_(490)"
+    },
+    {
+      "ConcreteType": "PythonNodeModels.PythonNode, PythonNodeModels",
+      "Code": "# Find the PressurePipeStyle collection. OUT = report\r\nimport clr\r\nclr.AddReference(\"AcMgd\"); clr.AddReference(\"AcDbMgd\"); clr.AddReference(\"AeccDbMgd\")\r\nclr.AddReference(\"AeccPressurePipesMgd\")\r\nfrom Autodesk.AutoCAD.ApplicationServices.Core import Application\r\nfrom Autodesk.AutoCAD.DatabaseServices import OpenMode\r\nfrom Autodesk.Civil.ApplicationServices import CivilApplication, CivilDocumentPressurePipesExtension\r\ncivdoc = CivilApplication.ActiveDocument\r\ndb = Application.DocumentManager.MdiActiveDocument.Database\r\nreport = []\r\ndef log(x): report.append(str(x))\r\n\r\n# (1) full recursive-ish walk of civdoc.Styles for ANY collection whose ToObjectIds\r\n#     yields a PressurePipeStyle, one level under each *Styles collection too\r\ntr = db.TransactionManager.StartTransaction()\r\ntry:\r\n    nids = list(CivilDocumentPressurePipesExtension.GetPressurePipeNetworkIds(civdoc))\r\n    pp = None\r\n    for nid in nids:\r\n        pids = list(tr.GetObject(nid, OpenMode.ForRead).GetPipeIds())\r\n        if pids: pp = tr.GetObject(pids[0], OpenMode.ForRead); break\r\n    target = str(pp.get_StyleId())\r\n    log(f\"target = {target}\")\r\n\r\n    styles = civdoc.Styles\r\n    roots = [n for n in dir(styles) if n.endswith(\"Styles\") and not n.startswith(\"get_\")]\r\n    for cn in roots:\r\n        coll = getattr(styles, cn, None)\r\n        # try the collection itself\r\n        try:\r\n            oids = list(coll.ToObjectIds())\r\n            if any(str(o)==target for o in oids):\r\n                log(f\">>> target in civdoc.Styles.{cn}\")\r\n            # peek element type\r\n            if oids:\r\n                t = type(tr.GetObject(oids[0], OpenMode.ForRead)).__name__\r\n                if \"Pressure\" in t:\r\n                    log(f\"civdoc.Styles.{cn} holds {t} (Count={len(oids)})\")\r\n        except Exception:\r\n            pass\r\n        # try nested sub-collections one level down\r\n        for sub in [s for s in dir(coll) if s.endswith(\"Styles\") and not s.startswith(\"get_\")]:\r\n            try:\r\n                subcoll = getattr(coll, sub)\r\n                oids = list(subcoll.ToObjectIds())\r\n                if any(str(o)==target for o in oids):\r\n                    log(f\">>> target in civdoc.Styles.{cn}.{sub}\")\r\n                if oids and \"Pressure\" in type(tr.GetObject(oids[0], OpenMode.ForRead)).__name__:\r\n                    log(f\"civdoc.Styles.{cn}.{sub} holds PressurePipeStyle (Count={len(oids)})\")\r\n            except Exception:\r\n                pass\r\nfinally:\r\n    tr.Dispose()\r\nOUT = report\r\n",
+      "Engine": "CPython3",
+      "VariableInputPorts": true,
+      "Id": "368d3e99b44a418a952e9408f458cf58",
+      "NodeType": "PythonScriptNode",
+      "Inputs": [
+        {
+          "Id": "d7ddb591e53a44abbd8455a627897011",
+          "Name": "IN[0]",
+          "Description": "Input #0",
+          "UsingDefaultValue": false,
+          "Level": 2,
+          "UseLevels": false,
+          "KeepListStructure": false
+        }
+      ],
+      "Outputs": [
+        {
+          "Id": "dc130d94093b4eb0a89ae7261a19e815",
+          "Name": "OUT",
+          "Description": "Result of the python script",
+          "UsingDefaultValue": false,
+          "Level": 2,
+          "UseLevels": false,
+          "KeepListStructure": false
+        }
+      ],
+      "Replication": "Disabled",
+      "Description": "Runs an embedded Python script."
+    },
+    {
+      "ConcreteType": "CoreNodeModels.Watch, CoreNodeModels",
+      "WatchWidth": 574.0,
+      "WatchHeight": 191.0,
+      "Id": "f83131fdb4b448db995c14e263e14040",
+      "NodeType": "ExtensionNode",
+      "Inputs": [
+        {
+          "Id": "311dfffb9f304bb690a358b6b35eed44",
+          "Name": "",
+          "Description": "Node to show output from",
+          "UsingDefaultValue": false,
+          "Level": 2,
+          "UseLevels": false,
+          "KeepListStructure": false
+        }
+      ],
+      "Outputs": [
+        {
+          "Id": "45903ebfb6dc4b43af0994ded63c5458",
+          "Name": "",
+          "Description": "Node output",
+          "UsingDefaultValue": false,
+          "Level": 2,
+          "UseLevels": false,
+          "KeepListStructure": false
+        }
+      ],
+      "Replication": "Disabled",
+      "Description": "Visualizes a node's output"
     }
   ],
   "Connectors": [
@@ -654,6 +755,12 @@
       "IsHidden": "False"
     },
     {
+      "Start": "857b61392e7042c7af9c9fb8a075a62c",
+      "End": "a2a23322b62640888b89fc89b3d6dab4",
+      "Id": "2579f5173b514303912a7f5f0e4030d2",
+      "IsHidden": "False"
+    },
+    {
       "Start": "71d0ddbc204a458885d77bea5e1539fc",
       "End": "4c4224be6b2f47e9b16f166000096ced",
       "Id": "e46c4c2e68a843489f31040a15ef0172",
@@ -661,8 +768,8 @@
     },
     {
       "Start": "65407700138144fcaaecd5857615a4f7",
-      "End": "a2a23322b62640888b89fc89b3d6dab4",
-      "Id": "98e0bcd7910d47b18640926dd162860e",
+      "End": "1631f91872e142df9b49d0624ea609e5",
+      "Id": "fc54e90823bc424cb78100768e527a7f",
       "IsHidden": "False"
     },
     {
@@ -754,6 +861,18 @@
       "End": "7d40bf9437a948b4bd1faa478e446f56",
       "Id": "4561a2cf5252489283c70910466f829e",
       "IsHidden": "False"
+    },
+    {
+      "Start": "eb221dc8cf4d4913ac2c2b722ab9d03a",
+      "End": "17b9c26f4ddb4162a48dd482ec187534",
+      "Id": "5c03a9b6c7424e1d899619e4fd464561",
+      "IsHidden": "False"
+    },
+    {
+      "Start": "dc130d94093b4eb0a89ae7261a19e815",
+      "End": "311dfffb9f304bb690a358b6b35eed44",
+      "Id": "425a38f0a86d4755bdd6c50a0ed0cb45",
+      "IsHidden": "False"
     }
   ],
   "Dependencies": [],
@@ -815,8 +934,8 @@
         "IsSetAsOutput": false,
         "Excluded": false,
         "ShowGeometry": true,
-        "X": -169.77811881879563,
-        "Y": 967.1525686227934
+        "X": -200.07538447880552,
+        "Y": 1024.2902703581408
       },
       {
         "Id": "3b84291c62a344028e265b8be85ecf84",
@@ -825,28 +944,28 @@
         "IsSetAsOutput": false,
         "Excluded": false,
         "ShowGeometry": true,
-        "X": 30.29071402670843,
-        "Y": 967.9552449111966
+        "X": -0.006551633301455695,
+        "Y": 1025.092946646544
       },
       {
         "Id": "ba4eafb2a5aa4035847eef703bed4511",
-        "Name": "String",
+        "Name": "PV Parts Gravity Style Name",
         "IsSetAsInput": false,
         "IsSetAsOutput": false,
         "Excluded": false,
         "ShowGeometry": true,
-        "X": -469.5828924401021,
-        "Y": 1190.998717010446
+        "X": -574.0601376988512,
+        "Y": 1247.0292548711855
       },
       {
         "Id": "c30637d2c14c4fd7945cffb57a972f37",
-        "Name": "String",
+        "Name": "Duckdb Path",
         "IsSetAsInput": false,
         "IsSetAsOutput": false,
         "Excluded": false,
         "ShowGeometry": true,
-        "X": -502.3294645332053,
-        "Y": 958.9845518521493
+        "X": -532.6267301932152,
+        "Y": 1016.1222535874967
       },
       {
         "Id": "044026bd6b034dbda43dbd4a7ce89091",
@@ -855,8 +974,8 @@
         "IsSetAsOutput": false,
         "Excluded": false,
         "ShowGeometry": true,
-        "X": -566.7781188187956,
-        "Y": 1348.1525686227935
+        "X": -611.6063638223309,
+        "Y": 1558.9059788957757
       },
       {
         "Id": "f6787fc06e6243d698c4a7e5620bfc38",
@@ -1005,8 +1124,38 @@
         "IsSetAsOutput": false,
         "Excluded": false,
         "ShowGeometry": true,
-        "X": -448.76000656974486,
-        "Y": 836.1493573439992
+        "X": -479.05727222975474,
+        "Y": 893.2870590793467
+      },
+      {
+        "Id": "12304313f68f423db39a445f0f3dd9c0",
+        "Name": "Pressure Pipe Name to Copy Style From",
+        "IsSetAsInput": false,
+        "IsSetAsOutput": false,
+        "Excluded": false,
+        "ShowGeometry": true,
+        "X": -658.6137670042825,
+        "Y": 1397.6823126599493
+      },
+      {
+        "Id": "368d3e99b44a418a952e9408f458cf58",
+        "Name": "Python Script",
+        "IsSetAsInput": false,
+        "IsSetAsOutput": false,
+        "Excluded": true,
+        "ShowGeometry": true,
+        "X": -7.704447498326317,
+        "Y": 2232.3492296091968
+      },
+      {
+        "Id": "f83131fdb4b448db995c14e263e14040",
+        "Name": "Watch",
+        "IsSetAsInput": false,
+        "IsSetAsOutput": false,
+        "Excluded": false,
+        "ShowGeometry": true,
+        "X": 187.90961318072573,
+        "Y": 2237.012520582952
       }
     ],
     "Annotations": [
@@ -1023,17 +1172,18 @@
           "ba4eafb2a5aa4035847eef703bed4511",
           "c30637d2c14c4fd7945cffb57a972f37",
           "044026bd6b034dbda43dbd4a7ce89091",
-          "b36d7acefb6a4af9a9700cc04c4f923b"
+          "b36d7acefb6a4af9a9700cc04c4f923b",
+          "12304313f68f423db39a445f0f3dd9c0"
         ],
         "HasNestedGroups": false,
-        "Left": -576.7781188187956,
-        "Top": 763.1493573439992,
-        "Width": 1838.068832845504,
-        "Height": 842.8058875671974,
+        "Left": -668.6137670042825,
+        "Top": 820.2870590793467,
+        "Width": 1899.607215370981,
+        "Height": 870.618919816429,
         "FontSize": 36.0,
         "GroupStyleId": "00000000-0000-0000-0000-000000000000",
-        "InitialTop": 836.1493573439992,
-        "InitialHeight": 657.0032112787943,
+        "InitialTop": 893.2870590793467,
+        "InitialHeight": 763.2909432411668,
         "TextblockHeight": 63.0,
         "Background": "#FFC1D676"
       },
@@ -1073,8 +1223,8 @@
         "Background": "#FFC1D676"
       }
     ],
-    "X": 654.841023757459,
-    "Y": -520.0080238307796,
-    "Zoom": 0.7736638385155018
+    "X": 635.6592255399463,
+    "Y": -497.10789350310006,
+    "Zoom": 0.7879383281733785
   }
 }
