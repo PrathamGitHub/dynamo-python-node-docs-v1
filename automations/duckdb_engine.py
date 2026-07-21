@@ -5,6 +5,7 @@ import duckdb
 
 _PIPE_COLS = [
     ("handle","TEXT"),("name","TEXT"),("network","TEXT"),("role","TEXT"),
+    ("description","TEXT"),
     ("start_handle","TEXT"),("end_handle","TEXT"),
     ("start_x","DOUBLE"),("start_y","DOUBLE"),("start_z","DOUBLE"),
     ("end_x","DOUBLE"),("end_y","DOUBLE"),("end_z","DOUBLE"),

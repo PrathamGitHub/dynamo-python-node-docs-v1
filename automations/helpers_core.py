@@ -77,3 +77,11 @@ def build_unique_name(existing_set, base):
             existing_set.add(cand)
             return cand
         i += 1
+
+
+def style_name(style_obj):
+    """Read a Civil 3D style's Name on builds where the pythonnet `.Name` property
+    wrapper throws 'property cannot be read'. Invokes the CLR get_Name method
+    directly via reflection, which succeeds where the property accessor fails.
+    Probe-confirmed on 2025.2.5 for LabelStyle (gravity + pressure crossing labels)."""
+    return style_obj.GetType().GetMethod("get_Name").Invoke(style_obj, None)
