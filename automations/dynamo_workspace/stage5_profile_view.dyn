@@ -997,15 +997,7 @@
     }
   ],
   "Dependencies": [],
-  "NodeLibraryDependencies": [
-    {
-      "Name": "stage3_crossings.ddb",
-      "ReferenceType": "External",
-      "Nodes": [
-        "c30637d2c14c4fd7945cffb57a972f37"
-      ]
-    }
-  ],
+  "NodeLibraryDependencies": [],
   "EnableLegacyPolyCurveBehavior": true,
   "Thumbnail": "",
   "GraphDocumentationURL": null,

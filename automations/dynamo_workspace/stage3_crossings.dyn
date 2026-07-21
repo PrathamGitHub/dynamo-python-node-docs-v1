@@ -108,7 +108,7 @@
       ],
       "Replication": "Disabled",
       "Description": "Creates a string",
-      "InputValue": "YCC- WASTEWATER NETWORK"
+      "InputValue": "1. YCC-WASTEWATER NETWORK"
     },
     {
       "ConcreteType": "CoreNodeModels.Input.StringInput, CoreNodeModels",
@@ -128,7 +128,7 @@
       ],
       "Replication": "Disabled",
       "Description": "Creates a string",
-      "InputValue": "\\\\wsl.localhost\\Ubuntu-24.04\\home\\wsl\\work\\project\\dynamo-python-node-docs-v1\\data\\stage3_crossings.ddb"
+      "InputValue": "\\\\wsl.localhost\\Ubuntu-24.04\\home\\wsl\\work\\project\\dynamo-python-node-docs-v1\\data\\20260721_crossings.ddb"
     },
     {
       "ConcreteType": "CoreNodeModels.Input.IntegerSlider, CoreNodeModels",
@@ -760,7 +760,7 @@
   "Dependencies": [],
   "NodeLibraryDependencies": [
     {
-      "Name": "stage3_crossings.ddb",
+      "Name": "20260721_crossings.ddb",
       "ReferenceType": "External",
       "Nodes": [
         "c30637d2c14c4fd7945cffb57a972f37"
@@ -789,13 +789,13 @@
     {
       "NodeId": "0ea3cb2c-b8aa-4b4b-a072-76e70a930208",
       "Binding": {
-        "ByGeometry_InClassDecl-1_InFunctionScope-1_Instance0_0ea3cb2c-b8aa-4b4b-a072-76e70a930208": "H4sIAAAAAAAACouuVkpJLElUslJycjGxcFWqjQUAMdBBnxIAAAA="
+        "ByGeometry_InClassDecl-1_InFunctionScope-1_Instance0_0ea3cb2c-b8aa-4b4b-a072-76e70a930208": "H4sIAAAAAAAACouuVkpJLElUslIyNHQxMnRSqo0FAKTs5DMTAAAA"
       }
     },
     {
       "NodeId": "bc1ebb8a-da98-4fc4-8bec-b02334426e5b",
       "Binding": {
-        "ByGeometry_InClassDecl-1_InFunctionScope-1_Instance0_bc1ebb8a-da98-4fc4-8bec-b02334426e5b": "H4sIAAAAAAAACouuVkpJLElUslJycjGxcFOqjQUA33/0jRIAAAA="
+        "ByGeometry_InClassDecl-1_InFunctionScope-1_Instance0_bc1ebb8a-da98-4fc4-8bec-b02334426e5b": "H4sIAAAAAAAACouuVkpJLElUslIyNHQxMnRRqo0FAHizjxYTAAAA"
       }
     }
   ],

@@ -54,7 +54,7 @@ def iter_main_pvs(context, con, h2id):
 def run(context):
     civdoc, tr, IN = context["civdoc"], context["tr"], context["IN"]
     db = context["db"]                       # AutoCAD Database (Recipe 7/8 contract)
-    data = {"Warnings": [], "Skipped": [], "Items": []}
+    data = {"Warnings": [], "Skipped": [], "Items": [], "Handoff": []}
     try:
         duckdb_path = IN[0] if (len(IN) > 0 and IN[0]) else ':memory:'
         grav_style_name = IN[1] if (len(IN) > 1 and IN[1]) else None
@@ -90,6 +90,8 @@ def run(context):
                 tr, db, main_ids, pv_id, ProfileViewPart, HAS_PVPART, data["Warnings"])
 
             # net.set_pvpart_styles(tr, pvpart_main, grav_pvpart_style, data["Warnings"])
+            # Main pipe + its structures keep their existing style.
+            # Uncomment only if you need to force a specific style on the main pipe.
 
             # 2) crossings from DuckDB (detected once, in Stage 3)
             rows = con.execute("""SELECT cross_handle, cross_kind FROM crossings
@@ -103,6 +105,10 @@ def run(context):
             # attach each gravity crossing pipe's end structures too. get_pipe_end_
             # structure_ids takes the OPENED pipe object, so we open it first.
             grav_all = list(grav_ids)
+            # End structures of crossing gravity pipes are NOT added to the PV.
+            # Adding them created unlabelled PV parts (structures have no crossings
+            # row, so Stage 7 never labels them) and inflated the "missing labels"
+            # count. Disabled; uncomment only if you need structures in the view.
             # for gid in grav_ids:
             #     pipe_obj = tr.GetObject(gid, OpenMode.ForRead)
             #     s_start, s_end = net.get_pipe_end_structure_ids(pipe_obj)
@@ -159,6 +165,12 @@ def run(context):
                     or grav_labelable < len(grav_ids) or pres_labelable < len(pres_ids):
                 data["Warnings"].append(
                     f"PV {main_handle}: add/hand-off gap -> {diagnostics}")
+            
+            # Serialisable hand-off for standalone Stage 7 (handles only, no ObjectIds).
+            # Stage 7 accepts this list as IN[3]; if absent it falls back to
+            # rederive_pv_records (ModelSpace re-scan). OUT[0] = data["Handoff"].
+            data["Handoff"].append(net.build_handoff_payload(
+                main_handle, pv_id, grav_by_handle, pres_by_handle, id2h))
 
             # In-run hand-off record for the orchestrator (Stage 8) / Stage 7.
             # pv_id + pvpart maps are SESSION objects: kept in Data for the current
@@ -176,4 +188,8 @@ def run(context):
     except Exception as e:
         data["Warnings"].append(str(e))
         data["Warnings"].append(traceback.format_exc())
+    # OUT[0] = data["Handoff"]: list of {main_handle, pv_handle, grav_handles,
+    # pres_handles} — all plain strings, safe to wire as OUT[0] to a downstream
+    # Stage-7 Dynamo graph (pass as IN[3]). If you don't need standalone Stage 7,
+    # ignore it; the orchestrator (Stage 8) uses data["Items"] directly.
     return data

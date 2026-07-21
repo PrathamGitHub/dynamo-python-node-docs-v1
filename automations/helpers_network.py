@@ -102,6 +102,7 @@ def extract_pipes(tr, net, network_name, role, missing, skipped):
             rows.append({
                 "handle": handle, "name": get_member(p, "Name", str, None, missing),
                 "network": network_name, "role": role,
+                "description": get_member(p, "Description", str, None, missing),
                 "start_handle": sh, "end_handle": eh,
                 "start_x": sx, "start_y": sy, "start_z": sz,
                 "end_x": ex, "end_y": ey, "end_z": ez,
@@ -168,6 +169,7 @@ def extract_pressure_pipes(tr, pnet, network_name, missing, skipped):
                 "handle": p.Handle.ToString(),
                 "name": get_member(p, "Name", str, None, missing),
                 "network": network_name, "role": "pressure_cross",
+                "description": get_member(p, "Description", str, None, missing),
                 "start_handle": None, "end_handle": None,
                 "start_x": sx, "start_y": sy, "start_z": sz,
                 "end_x": ex, "end_y": ey, "end_z": ez,
@@ -360,12 +362,6 @@ def pvpart_addition_stats(ids_to_add, pvpart_map):
 
 
 def set_pvpart_styles(tr, pvpart_map, style_id, warnings):
-    """Apply the display style for parts drawn in a profile view.
-    pvpart_map: {model_oid: pvpart_oid} as returned by add_*_to_profile_view.
-    style_id: ObjectId of the target network part style; None/Null -> no-op.
-    The profile-view display of a pipe/structure follows its NETWORK part style,
-    so we set StyleId on the MODEL part (model_oid), not the pvpart. Called once
-    for gravity parts, once for pressure parts, after add."""
     if style_id is None:
         return
     try:
@@ -373,12 +369,35 @@ def set_pvpart_styles(tr, pvpart_map, style_id, warnings):
             return
     except Exception:
         return
+    applied = 0
     for model_oid, pvpart_oid in pvpart_map.items():
         try:
-            part = tr.GetObject(model_oid, OpenMode.ForWrite)   # the pipe/structure
+            part = tr.GetObject(model_oid, OpenMode.ForWrite)
             part.StyleId = style_id
+            # read-back: confirm the write actually took (message-232 step B)
+            if part.StyleId == style_id:
+                applied += 1
+            else:
+                warnings.append(f"set_pvpart_styles: StyleId did not stick on {model_oid} "
+                                f"(read-back != target)")
         except Exception as e:
             warnings.append(f"set_pvpart_styles: could not set style on {model_oid}: {e}")
+    warnings.append(f"set_pvpart_styles: applied {applied}/{len(pvpart_map)} part styles.")
+
+
+def build_handoff_payload(main_handle, pv_id, grav_by_handle, pres_by_handle, id2h):
+    """Serialise one PV's Stage-6 state into a plain dict of strings.
+    ObjectIds cannot cross the Dynamo graph boundary; handles (hex strings) can.
+    grav_by_handle / pres_by_handle: {cross_handle_str: pvpart_oid} — already
+    re-keyed by handle (the re-key happens in the loop before this call).
+    id2h: inverse handle index {ObjectId: handle_str} — used to serialise pv_id.
+    Returns a JSON-serialisable dict; Stage 7 consumes a list of these via IN[3]."""
+    return {
+        "main_handle":  main_handle,
+        "pv_handle":    id2h.get(pv_id) or pv_id.Handle.ToString(),
+        "grav_handles": list(grav_by_handle.keys()),
+        "pres_handles": list(pres_by_handle.keys()),
+    }
 
 
 def build_handle_index(db, tr, civdoc, has_pressure, pressure_ext, warnings):
